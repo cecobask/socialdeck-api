@@ -1,23 +1,22 @@
 const express = require('express');
-const {ApolloServer, gql} = require('apollo-server-express');
-
-const typeDefs = gql`
-    type Query {
-        hello: String
-    }
-`;
-
-const resolvers = {
-    Query: {
-        hello: () => 'Hello world!'
-    }
-};
-
-const server = new ApolloServer({typeDefs, resolvers});
-
+const {ApolloServer} = require('apollo-server-express');
+const schema = require('./schema');
+const server = new ApolloServer({schema});
 const app = express();
-server.applyMiddleware({app});
+const mongoose = require('mongoose');
 
+// Connect to the local MongoDB instance.
+mongoose.connect('mongodb://localhost:27017/usersDb', {useNewUrlParser: true, useUnifiedTopology: true})
+    .then(db => {
+        const conn = db.connection;
+        console.log(`Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
+    })
+    .catch(err => {
+        throw new Error(err);
+    });
+
+app.use(express.json());
+server.applyMiddleware({app});
 app.listen({port: 4000}, () =>
-    console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
+    console.log(`🚀🚀🚀🚀Server ready at http://localhost:4000${server.graphqlPath}`)
 );
