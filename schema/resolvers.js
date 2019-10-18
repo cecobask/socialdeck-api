@@ -25,6 +25,14 @@ const resolvers = {
                     throw new ApolloError(err)
                 })
         },
+
+        deleteUser(parent, args) {
+            return User.findByIdAndDelete(args._id)
+                .then(user => user)
+                .catch(err => {
+                    throw new ApolloError(`FUUUCK. No user found with this ID! ${err}`)
+                })
+        }
     }
 
 };
