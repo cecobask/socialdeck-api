@@ -6,14 +6,14 @@ const app = express();
 const mongoose = require('mongoose');
 
 // Connect to the local MongoDB instance.
-mongoose.connect('mongodb://localhost:27017/usersDb', {useNewUrlParser: true, useUnifiedTopology: true})
-    .then(db => {
-        const conn = db.connection;
-        console.log(`Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
-    })
-    .catch(err => {
-        throw new Error(err);
-    });
+mongoose.connect('mongodb://localhost:27017/usersDb', {
+    useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true
+}).then(db => {
+    const conn = db.connection;
+    console.log(`Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
+}).catch(err => {
+    throw new Error(err);
+});
 
 app.use(express.json());
 server.applyMiddleware({app});

@@ -16,6 +16,17 @@ const resolvers = {
         }
     },
 
+    Mutation: {
+        addUser(parent, args) {
+            const user = new User({"firstName":args.firstName, "lastName":args.lastName});
+            return user.save()
+                .then(user => user)
+                .catch(err => {
+                    throw new ApolloError(err)
+                })
+        },
+    }
+
 };
 
 module.exports = resolvers;

@@ -8,3 +8,7 @@ type Query {
     users: [User!]!
     findUserById(_id: String!): User!
 }
+
+type Mutation {
+    addUser(firstName: String!, lastName: String!): User
+}
