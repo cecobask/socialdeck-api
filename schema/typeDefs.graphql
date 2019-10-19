@@ -1,5 +1,6 @@
 type User {
     _id: ID!
+    email: String!
     firstName: String!
     lastName: String!
 }
@@ -10,6 +11,7 @@ type Query {
 }
 
 type Mutation {
-    addUser(firstName: String!, lastName: String!): User!
-    deleteUser(_id: String!): User!
+    addUser(email: String!, firstName: String!, lastName: String!): User!
+    deleteUserById(_id: String!): User!
+    deleteAllUsers: String
 }

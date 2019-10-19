@@ -2,8 +2,9 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
 const UserSchema = new mongoose.Schema({
-        firstName: {type: String, unique: true},
-        lastName: {type: String, unique: true}
+        email: {type: String, unique: true},
+        firstName: {type: String},
+        lastName: {type: String}
     },
     {collection: 'users'});
 UserSchema.plugin(uniqueValidator);

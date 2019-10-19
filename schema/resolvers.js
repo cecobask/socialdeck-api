@@ -8,17 +8,17 @@ const resolvers = {
         },
 
         findUserById(parent, args) {
-            return User.findById(args._id).then(user => {
-                return user;
-            }).catch(err => {
-                throw new ApolloError(`FUUUCK. No user found with this ID! ${err}`);
-            })
+            return User.findById(args._id)
+                .then(user => user)
+                .catch(err => {
+                    throw new ApolloError(`FUUUCK. No user found with this ID! ${err}`)
+                });
         }
     },
 
     Mutation: {
         addUser(parent, args) {
-            const user = new User({"firstName":args.firstName, "lastName":args.lastName});
+            const user = new User({"email": args.email, "firstName": args.firstName, "lastName": args.lastName});
             return user.save()
                 .then(user => user)
                 .catch(err => {
@@ -26,11 +26,24 @@ const resolvers = {
                 })
         },
 
-        deleteUser(parent, args) {
+        deleteUserById(parent, args) {
             return User.findByIdAndDelete(args._id)
                 .then(user => user)
                 .catch(err => {
                     throw new ApolloError(`FUUUCK. No user found with this ID! ${err}`)
+                })
+        },
+
+        deleteAllUsers(_, args) {
+            return User.deleteMany({})
+                .then(result => {
+                    if (result.n === 0) {
+                        throw new ApolloError("No users in the database!");
+                    }
+                    return "Successfully deleted all users!"
+                })
+                .catch(err => {
+                    throw new ApolloError(err);
                 })
         }
     }
