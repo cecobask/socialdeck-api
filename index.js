@@ -1,7 +1,6 @@
 const express = require('express');
 const {ApolloServer} = require('apollo-server-express');
 const schema = require('./schema');
-const server = new ApolloServer({schema});
 const app = express();
 const mongoose = require('mongoose');
 
@@ -16,6 +15,7 @@ mongoose.connect('mongodb://localhost:27017/usersDb', {
 });
 
 app.use(express.json());
+const server = new ApolloServer({schema});
 server.applyMiddleware({app});
 app.listen({port: 4000}, () =>
     console.log(`🚀🚀🚀🚀Server ready at http://localhost:4000${server.graphqlPath}`)

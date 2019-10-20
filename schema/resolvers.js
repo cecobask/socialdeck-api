@@ -1,5 +1,6 @@
 const User = require('../models/users');
 const {ApolloError} = require('apollo-server-express');
+const bcrypt = require('bcrypt');
 
 const resolvers = {
     Query: {
@@ -18,7 +19,13 @@ const resolvers = {
 
     Mutation: {
         addUser(parent, args) {
-            const user = new User({"email": args.email, "firstName": args.firstName, "lastName": args.lastName});
+            const user = new User({
+                "email": args.email,
+                "password": bcrypt.hash(args.password, 10),
+                "firstName": args.firstName,
+                "lastName": args.lastName
+            });
+
             return user.save()
                 .then(user => user)
                 .catch(err => {
