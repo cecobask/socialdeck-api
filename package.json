@@ -2,9 +2,9 @@
   "name": "socialdeck",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Tsvetoslav Dimov",
@@ -13,12 +13,17 @@
     "apollo-server": "^2.9.6",
     "apollo-server-express": "^2.9.6",
     "bcrypt": "^3.0.6",
+    "cookie-parser": "^1.4.4",
+    "debug": "^4.1.1",
+    "ejs": "^2.7.1",
     "express": "^4.17.1",
     "graphql": "^14.5.8",
     "graphql-import": "^0.7.1",
     "graphql-tools": "^4.0.5",
+    "http-errors": "^1.7.3",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.7.5",
-    "mongoose-unique-validator": "^2.0.3"
+    "mongoose-unique-validator": "^2.0.3",
+    "morgan": "^1.9.1"
   }
 }
