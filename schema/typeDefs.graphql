@@ -9,10 +9,12 @@ type User {
 type Query {
     users: [User!]!
     findUserById(_id: String!): User!
+    me: User!
 }
 
 type Mutation {
-    addUser(email: String!, password: String!, firstName: String!, lastName: String!): User!
+    signUp(email: String!, password: String!, firstName: String!, lastName: String!): String!
+    logIn(email: String!, password: String!): String!
     deleteUserById(_id: String!): User!
     deleteAllUsers: String!
 }
