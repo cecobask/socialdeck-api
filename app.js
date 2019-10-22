@@ -26,6 +26,7 @@ const context = ({req}) => {
     try {
         // Return user object if token is valid.
         return jwt.verify(authorization.split(' ')[1], 'secret!');
+        // eslint-disable-next-line no-empty
     } catch (e) {}
 };
 // Creates an Apollo server with specified typeDefs & resolvers + context.
@@ -41,18 +42,18 @@ apollo.applyMiddleware({app});
 
 // Creates the HTTPS or HTTP server, per configuration.
 let server;
-if (config.ssl) {
+if (config.ssl) 
     // Assumes certificates are in a .ssl folder of the package root.
     server = https.createServer(
         {
-            key: fs.readFileSync(`./.ssl/server.key`),
-            cert: fs.readFileSync(`./.ssl/server.cert`)
+            key: fs.readFileSync('./.ssl/server.key'),
+            cert: fs.readFileSync('./.ssl/server.cert')
         },
         app
-    )
-} else {
-    server = http.createServer(app)
-}
+    );
+else 
+    server = http.createServer(app);
+
 server.listen({port: config.port}, () =>
     console.log(`Server ready at http${config.ssl ? 's' : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`)
 );
@@ -85,7 +86,7 @@ app.use(function (req, res, next) {
 });
 
 // Error handler.
-app.use(function (err, req, res, next) {
+app.use(function (err, req, res) {
     // Set locals, only providing error in development.
     res.locals.message = err.message;
     res.locals.error = req.app.get('env') === 'development' ? err : {};
