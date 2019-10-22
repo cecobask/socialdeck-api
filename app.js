@@ -8,6 +8,55 @@ const path = require('path');
 const createError = require('http-errors');
 const cookieParser = require('cookie-parser');
 const indexRouter = require('./routes/index');
+const https = require('https');
+const http = require('http');
+const fs = require('fs');
+
+const configurations = {
+    production: { ssl: true, port: 7000, hostname: 'localhost' },
+    development: { ssl: false, port: 4000, hostname: 'localhost' }
+};
+const environment = process.env.NODE_ENV || 'production';
+const config = configurations[environment];
+
+// Generates context for each request sent to the API.
+const context = ({req}) => {
+    // Authorization header, if present.
+    const authorization = req.headers.authorization || '';
+    try {
+        // Return user object if token is valid.
+        return jwt.verify(authorization.split(' ')[1], 'secret!');
+    } catch (e) {}
+};
+// Creates an Apollo server with specified typeDefs & resolvers + context.
+const apollo = new ApolloServer({
+    schema,
+    context,
+    introspection: true,
+    playground: true
+});
+
+const app = express();
+apollo.applyMiddleware({app});
+
+// Creates the HTTPS or HTTP server, per configuration.
+let server;
+if (config.ssl) {
+    // Assumes certificates are in a .ssl folder of the package root.
+    server = https.createServer(
+        {
+            key: fs.readFileSync(`./.ssl/server.key`),
+            cert: fs.readFileSync(`./.ssl/server.cert`)
+        },
+        app
+    )
+} else {
+    server = http.createServer(app)
+}
+server.listen({port: config.port}, () =>
+    console.log(`Server ready at http${config.ssl ? 's' : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`)
+);
+
 
 // Connect to the local MongoDB instance.
 mongoose.connect('mongodb://localhost:27017/usersDb', {
@@ -19,7 +68,6 @@ mongoose.connect('mongodb://localhost:27017/usersDb', {
     throw new Error(err);
 });
 
-const app = express();
 app.use(express.json());
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -46,24 +94,3 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.render('error');
 });
-
-app.listen({port: 4000}, () =>
-    console.log(`🚀🚀🚀🚀Server ready at http://localhost:4000${server.graphqlPath}`)
-);
-
-// Generates context for each request sent to the API.
-const context = ({req}) => {
-    // Authorization header, if present.
-    const authorization = req.headers.authorization || '';
-    try {
-        // Return user object if token is valid.
-        return jwt.verify(authorization.split(' ')[1], 'secret!');
-    } catch (e) {}
-};
-
-// Create an Apollo server with specified typeDefs & resolvers + context.
-const server = new ApolloServer({
-    schema,
-    context
-});
-server.applyMiddleware({app});
