@@ -38,6 +38,7 @@ type Mutation {
     deleteUserById(_id: String!): User!
     deleteAllUsers: String!
     createPost(creatorID: String!, message: String, links: [LinkInput!]): Post!
+    sharePost(postID: String!): Post!
     deletePostById(_id: String!): Post!
     deleteAllPosts: String!
 }

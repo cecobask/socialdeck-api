@@ -61,7 +61,10 @@ server.listen({port: config.port}, () =>
 
 // Connect to the local MongoDB instance.
 mongoose.connect('mongodb://localhost:27017/usersDb', {
-    useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false
 }).then(db => {
     const conn = db.connection;
     console.log(`Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
