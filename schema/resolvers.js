@@ -3,12 +3,13 @@ const Post = require('../models/posts');
 const {ApolloError, AuthenticationError} = require('apollo-server-express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const {DateTimeResolver, URLResolver} = require('graphql-scalars');
+const {DateTimeResolver, URLResolver, EmailAddressResolver} = require('graphql-scalars');
 const moment = require('moment');
 
 const resolvers = {
     DateTime: DateTimeResolver,
     URL: URLResolver,
+    EmailAddress: EmailAddressResolver,
     
     User: {
         // Nested query that fetches all posts by a user.
@@ -19,7 +20,10 @@ const resolvers = {
     
     Query: {
         // Get all users in the database.
-        users() {
+        users(_, __, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             return User.find({})
                 .then(users => {
                     if (!users.length)
@@ -31,7 +35,10 @@ const resolvers = {
                 });
         },
         
-        findUserById(parent, {_id}) {
+        findUserById(_, {_id}, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             return User.findById(_id)
                 .then(user => user)
                 .catch(err => {
@@ -42,7 +49,7 @@ const resolvers = {
         },
         
         // Get currently authenticated user.
-        me(_, args, {user}) {
+        me(_, __, {user}) {
             if (!user)
                 throw new AuthenticationError('You aren\'t authenticated!');
             
@@ -50,7 +57,10 @@ const resolvers = {
         },
         
         // Get all users in the database.
-        posts() {
+        posts(_, __, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             return Post.find({})
                 .then(posts => {
                     if (!posts.length)
@@ -62,7 +72,10 @@ const resolvers = {
                 });
         },
         
-        findPostById(parent, {_id}) {
+        findPostById(_, {_id}, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             return Post.findById(_id)
                 .then(post => post)
                 .catch(err => {
@@ -74,7 +87,7 @@ const resolvers = {
     },
     
     Mutation: {
-        async signUp(parent, {email, password, firstName, lastName}) {
+        async signUp(_, {email, password, firstName, lastName}) {
             const user = new User({
                 'email': email,
                 'password': await bcrypt.hash(password, 10),
@@ -90,11 +103,13 @@ const resolvers = {
             
             // Return json web token.
             return jwt.sign({
-                user: {
-                    _id: user._id,
-                    email: user.email,
+                    user: {
+                        _id: user._id,
+                        email: user.email,
+                    },
                 },
-            }, 'secret!', {expiresIn: '10m'});
+                'secret!',
+                {expiresIn: '1h'});
         },
         
         async logIn(_, {email, password}) {
@@ -120,11 +135,14 @@ const resolvers = {
                     },
                 },
                 'secret!',
-                {expiresIn: '10m'},
+                {expiresIn: '1h'},
             );
         },
         
-        deleteUserById(parent, {_id}) {
+        deleteUserById(_, {_id}, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             return User.findByIdAndDelete(_id)
                 .then(user => user)
                 .catch(err => {
@@ -134,7 +152,10 @@ const resolvers = {
                 });
         },
         
-        deleteAllUsers() {
+        deleteAllUsers(_, __, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             return User.deleteMany({})
                 .then(result => {
                     // Means the users database is empty.
@@ -150,7 +171,10 @@ const resolvers = {
                 });
         },
         
-        async createPost(parent, {creatorID, message, links}) {
+        async createPost(_, {creatorID, message, links}, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             const post = new Post({
                 'creatorID': creatorID,
                 'createdTime': moment()
@@ -167,7 +191,10 @@ const resolvers = {
                 });
         },
         
-        deletePostById(_, {_id}) {
+        deletePostById(_, {_id}, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             return Post.findByIdAndDelete(_id)
                 .then(post => post)
                 .catch(err => {
@@ -177,7 +204,10 @@ const resolvers = {
                 });
         },
         
-        deleteAllPosts() {
+        deleteAllPosts(_, __, {user}) {
+            if (!user) throw new AuthenticationError(
+                'You must authenticate first!');
+            
             return Post.deleteMany({})
                 .then(result => {
                     // Means the posts database is empty.
@@ -195,6 +225,7 @@ const resolvers = {
         sharePost(_, {postID}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
+            
             // Adds the user id to the the 'shares' array, if it doesn't exist there.
             return Post.findOneAndUpdate({'_id': postID},
                 {

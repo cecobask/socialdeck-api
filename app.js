@@ -34,9 +34,8 @@ const context = ({req}) => {
     try {
         // Return user object if token is valid.
         return jwt.verify(authorization.split(' ')[1], 'secret!');
-        
     }
-        // eslint-disable-next-line no-empty
+    // eslint-disable-next-line no-empty
     catch (e) {}
 };
 // Creates an Apollo server with specified typeDefs & resolvers + context.
