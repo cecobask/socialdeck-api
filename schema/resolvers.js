@@ -1,11 +1,24 @@
 const User = require('../models/users');
+const Post = require('../models/posts');
 const {ApolloError} = require('apollo-server-express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const {DateTimeResolver, URLResolver} = require('graphql-scalars');
+const moment = require('moment');
 
 const resolvers = {
+    DateTime: DateTimeResolver,
+    URL: URLResolver,
+
+    User: {
+        // Nested query that fetches all posts by a user.
+        posts(user) {
+            return Post.find({'creatorID': user._id});
+        }
+    },
+
     Query: {
-    // Get all users in the database.
+        // Get all users in the database.
         users() {
             return User.find({});
         },
@@ -24,7 +37,20 @@ const resolvers = {
                 throw new ApolloError('You aren\'t authenticated!');
             
             return User.findById(user._id);
-        }
+        },
+
+        // Get all users in the database.
+        posts() {
+            return Post.find({});
+        },
+
+        findPostById(parent, {_id}) {
+            return Post.findById(_id)
+                .then(post => post)
+                .catch(err => {
+                    throw new ApolloError(`No post found with this ID! ${err}`);
+                });
+        },
     },
 
     Mutation: {
@@ -94,6 +120,43 @@ const resolvers = {
                         throw new ApolloError('No users in the database!');
                     
                     return 'Successfully deleted all users!';
+                })
+                .catch(err => {
+                    throw new ApolloError(err);
+                });
+        },
+
+        async createPost(parent, {creatorID, message, links}) {
+            const post = new Post({
+                'creatorID': creatorID,
+                'createdTime': moment().utc(true).format(),
+                'message': message,
+                'links': links.map(link => link.url.href)
+            });
+
+            // Save post to the database.
+            return await post.save()
+                .catch(err => {
+                    throw new ApolloError(err);
+                });
+        },
+
+        deletePostById(parent, {_id}) {
+            return Post.findByIdAndDelete(_id)
+                .then(post => post)
+                .catch(err => {
+                    throw new ApolloError(`No post found with this ID! ${err}`);
+                });
+        },
+
+        deleteAllPosts() {
+            return Post.deleteMany({})
+                .then(result => {
+                // Means the posts database is empty.
+                    if (result.n === 0)
+                        throw new ApolloError('No posts in the database!');
+
+                    return 'Successfully deleted all posts!';
                 })
                 .catch(err => {
                     throw new ApolloError(err);

@@ -1,15 +1,35 @@
+scalar DateTime
+scalar URL
+
+type Post {
+    _id: ID!
+    creatorID: String!
+    createdTime: DateTime!
+    message: String
+    updatedTime: DateTime
+    links: [URL!]
+    shares: [String!]
+}
+
 type User {
     _id: ID!
     email: String!
     password: String!
     firstName: String!
     lastName: String!
+    posts: [Post!]!
 }
 
 type Query {
     users: [User!]!
     findUserById(_id: String!): User!
     me: User!
+    posts: [Post!]!
+    findPostById(_id: String!): Post!
+}
+
+input LinkInput {
+    url: URL!
 }
 
 type Mutation {
@@ -17,4 +37,7 @@ type Mutation {
     logIn(email: String!, password: String!): String!
     deleteUserById(_id: String!): User!
     deleteAllUsers: String!
+    createPost(creatorID: String!, message: String, links: [LinkInput!]): Post!
+    deletePostById(_id: String!): Post!
+    deleteAllPosts: String!
 }

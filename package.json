@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint \"**/*.js\""
+    "lint": "eslint \"**/*.js\"",
+    "lint:fix": "eslint \"**/*.js\" --fix"
   },
   "author": "Tsvetoslav Dimov",
   "license": "ISC",
@@ -21,9 +22,11 @@
     "express": "^4.17.1",
     "graphql": "^14.5.8",
     "graphql-import": "^0.7.1",
+    "graphql-scalars": "^1.0.2",
     "graphql-tools": "^4.0.5",
     "http-errors": "^1.7.3",
     "jsonwebtoken": "^8.5.1",
+    "moment": "^2.24.0",
     "mongoose": "^5.7.5",
     "mongoose-unique-validator": "^2.0.3",
     "morgan": "^1.9.1"

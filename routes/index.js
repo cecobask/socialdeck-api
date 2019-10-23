@@ -3,7 +3,7 @@ const router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res) {
-    res.render('index', { title: 'SocialDeck' })
+    res.render('index', { title: 'SocialDeck' });
 });
 
 module.exports = router;
