@@ -7,32 +7,33 @@
 <body>
 <div id="status"></div>
 <script>
-    window.fbAsyncInit = function () {
+    window.fbAsyncInit = function() {
         FB.init({
             appId: '1108573359346225',
             cookie: true,
             xfbml: true,
-            version: 'v4.0'
+            version: 'v4.0',
         });
 
         FB.AppEvents.logPageView();
 
-        checkLoginState()
+        checkLoginState();
     };
 
-    (function (d, s, id) {
-        let js, fjs = d.getElementsByTagName(s)[0];
+    (function(d, s, id) {
+        let js,
+            fjs = d.getElementsByTagName(s)[0];
         if (d.getElementById(id)) {
             return;
         }
         js = d.createElement(s);
         js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        js.src = 'https://connect.facebook.net/en_US/sdk.js';
         fjs.parentNode.insertBefore(js, fjs);
     }(document, 'script', 'facebook-jssdk'));
 
     function checkLoginState() {
-        FB.getLoginStatus(function (response) {
+        FB.getLoginStatus(function(response) {
             console.log(response);
             // The response object is returned with a status field that lets the
             // app know the current login status of the person.
@@ -41,7 +42,7 @@
             if (response.status === 'connected') {
                 // Logged into your app and Facebook.
                 console.log('Welcome!  Fetching your information.... ');
-                FB.api('/me', function (response) {
+                FB.api('/me', function(response) {
                     console.log('Successful login for: ' + response.name);
                     document.getElementById('status').innerHTML =
                         'Thanks for logging in, ' + response.name + '!';
@@ -49,7 +50,7 @@
             } else {
                 // The person is not logged into your app or we are unable to tell.
                 document.getElementById('status').innerHTML = 'Please log ' +
-                    'into this app.';
+                                                              'into this app.';
             }
         });
     }

@@ -13,8 +13,16 @@ const http = require('http');
 const fs = require('fs');
 
 const configurations = {
-    production: { ssl: true, port: 7000, hostname: 'localhost' },
-    development: { ssl: false, port: 4000, hostname: 'localhost' }
+    production: {
+        ssl: true,
+        port: 7000,
+        hostname: 'localhost',
+    },
+    development: {
+        ssl: false,
+        port: 4000,
+        hostname: 'localhost',
+    },
 };
 const environment = process.env.NODE_ENV || 'production';
 const config = configurations[environment];
@@ -26,15 +34,17 @@ const context = ({req}) => {
     try {
         // Return user object if token is valid.
         return jwt.verify(authorization.split(' ')[1], 'secret!');
+        
+    }
         // eslint-disable-next-line no-empty
-    } catch (e) {}
+    catch (e) {}
 };
 // Creates an Apollo server with specified typeDefs & resolvers + context.
 const apollo = new ApolloServer({
     schema,
     context,
     introspection: true,
-    playground: true
+    playground: true,
 });
 
 const app = express();
@@ -42,35 +52,39 @@ apollo.applyMiddleware({app});
 
 // Creates the HTTPS or HTTP server, per configuration.
 let server;
-if (config.ssl) 
-    // Assumes certificates are in a .ssl folder of the package root.
+if (config.ssl)
+// Assumes certificates are in a .ssl folder of the package root.
     server = https.createServer(
         {
             key: fs.readFileSync('./.ssl/server.key'),
-            cert: fs.readFileSync('./.ssl/server.cert')
+            cert: fs.readFileSync('./.ssl/server.cert'),
         },
-        app
+        app,
     );
-else 
+else
     server = http.createServer(app);
 
 server.listen({port: config.port}, () =>
-    console.log(`Server ready at http${config.ssl ? 's' : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`)
+    console.log(`Server ready at http${config.ssl
+        ? 's'
+        : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`),
 );
-
 
 // Connect to the local MongoDB instance.
 mongoose.connect('mongodb://localhost:27017/usersDb', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true,
-    useFindAndModify: false
-}).then(db => {
-    const conn = db.connection;
-    console.log(`Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
-}).catch(err => {
-    throw new Error(err);
-});
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useCreateIndex: true,
+        useFindAndModify: false,
+    })
+    .then(db => {
+        const conn = db.connection;
+        console.log(
+            `Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
+    })
+    .catch(err => {
+        throw new Error(err);
+    });
 
 app.use(express.json());
 // view engine setup
@@ -83,17 +97,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 
 // Catch 404 and forward to error handler.
-app.use(function (req, res, next) {
+app.use(function(req, res, next) {
     if (req.url === '/graphql') next();
     else next(createError(404));
 });
 
 // Error handler.
-app.use(function (err, req, res) {
+app.use(function(err, req, res) {
     // Set locals, only providing error in development.
     res.locals.message = err.message;
     res.locals.error = req.app.get('env') === 'development' ? err : {};
-
+    
     // Render the error page.
     res.status(err.status || 500);
     res.render('error');
