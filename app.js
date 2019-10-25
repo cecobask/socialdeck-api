@@ -2,7 +2,6 @@ const express = require('express');
 const {ApolloServer} = require('apollo-server-express');
 const schema = require('./schema');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 const logger = require('morgan');
 const path = require('path');
 const createError = require('http-errors');
@@ -11,6 +10,25 @@ const indexRouter = require('./routes/index');
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
+const session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
+const cors = require('cors');
+
+// Connect to the local MongoDB instance.
+mongoose.connect('mongodb://localhost:27017/usersDb', {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useCreateIndex: true,
+        useFindAndModify: false,
+    })
+    .then(db => {
+        const conn = db.connection;
+        console.log(
+            `Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
+    })
+    .catch(err => {
+        throw new Error(err);
+    });
 
 const configurations = {
     production: {
@@ -27,27 +45,71 @@ const configurations = {
 const environment = process.env.NODE_ENV || 'production';
 const config = configurations[environment];
 
-// Generates context for each request sent to the API.
-const context = ({req}) => {
-    // Authorization header, if present.
-    const authorization = req.headers.authorization || '';
-    try {
-        // Return user object if token is valid.
-        return jwt.verify(authorization.split(' ')[1], 'secret!');
-    }
-    // eslint-disable-next-line no-empty
-    catch (e) {}
-};
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.use(logger('dev'));
+app.use(express.urlencoded({extended: false}));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/', indexRouter);
+// Apply session middleware to Express, used for auth.
+app.use(session({
+    name: 'ebimumaykata',
+    secret: 'secret!',
+    resave: false,
+    saveUninitialized: false,
+    // Save Express sessions to MongoDB.
+    store: new MongoStore({mongooseConnection: mongoose.connection}),
+    cookie: {
+        secure: false,
+        maxAge: 60 * 60 * 1000, // 1 hour.
+        httpOnly: false,
+    },
+}));
+app.set('trust proxy', true);
+app.use(cors({
+    origin: true,
+    credentials: true,
+}));
+
 // Creates an Apollo server with specified typeDefs & resolvers + context.
 const apollo = new ApolloServer({
     schema,
-    context,
+    context: ({req, res}) => {
+        const user = req.session.user;
+        return {
+            req,
+            user,
+            res,
+        };
+    },
     introspection: true,
     playground: true,
 });
 
-const app = express();
-apollo.applyMiddleware({app});
+apollo.applyMiddleware({
+    app,
+    cors: false, // Disable Apollo's cors and use a custom one.
+});
+
+// Catch 404 and forward to error handler.
+app.use(function(req, res, next) {
+    if (req.url === '/graphql') next();
+    else next(createError(404));
+});
+
+// Error handler.
+app.use(function(err, req, res) {
+    // Set locals, only providing error in development.
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
+    
+    // Render the error page.
+    res.status(err.status || 500);
+    res.render('error');
+});
 
 // Creates the HTTPS or HTTP server, per configuration.
 let server;
@@ -68,46 +130,3 @@ server.listen({port: config.port}, () =>
         ? 's'
         : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`),
 );
-
-// Connect to the local MongoDB instance.
-mongoose.connect('mongodb://localhost:27017/usersDb', {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useCreateIndex: true,
-        useFindAndModify: false,
-    })
-    .then(db => {
-        const conn = db.connection;
-        console.log(
-            `Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
-    })
-    .catch(err => {
-        throw new Error(err);
-    });
-
-app.use(express.json());
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-app.use(logger('dev'));
-app.use(express.urlencoded({extended: false}));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/', indexRouter);
-
-// Catch 404 and forward to error handler.
-app.use(function(req, res, next) {
-    if (req.url === '/graphql') next();
-    else next(createError(404));
-});
-
-// Error handler.
-app.use(function(err, req, res) {
-    // Set locals, only providing error in development.
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
-    
-    // Render the error page.
-    res.status(err.status || 500);
-    res.render('error');
-});

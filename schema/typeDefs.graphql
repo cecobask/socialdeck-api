@@ -36,9 +36,10 @@ input LinkInput {
 type Mutation {
     signUp(email: EmailAddress!, password: String!, firstName: String!, lastName: String!): String!
     logIn(email: EmailAddress!, password: String!): String!
+    logOut: String!
     deleteUserById(_id: String!): User!
     deleteAllUsers: String!
-    createPost(creatorID: String!, message: String, links: [LinkInput!]): Post!
+    createPost(message: String, links: [LinkInput!]): Post!
     sharePost(postID: String!): Post!
     updatePost(postID: String!, message: String!, links: [LinkInput!]): Post!
     deletePostById(_id: String!): Post!

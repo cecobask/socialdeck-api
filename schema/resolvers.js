@@ -3,8 +3,14 @@ const Post = require('../models/posts');
 const {ApolloError, AuthenticationError} = require('apollo-server-express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const {DateTimeResolver, URLResolver, EmailAddressResolver} = require('graphql-scalars');
+const {DateTimeResolver, URLResolver, EmailAddressResolver} = require(
+    'graphql-scalars');
 const moment = require('moment');
+const fs = require('fs');
+const path = require('path');
+
+// Get key for signing JWT.
+const privateKey = fs.readFileSync(path.join(__dirname, '..', 'jwtRS256.key'));
 
 const resolvers = {
     DateTime: DateTimeResolver,
@@ -51,7 +57,7 @@ const resolvers = {
         // Get currently authenticated user.
         me(_, __, {user}) {
             if (!user)
-                throw new AuthenticationError('You aren\'t authenticated!');
+                throw new AuthenticationError('You are not authenticated!');
             
             return User.findById(user._id);
         },
@@ -87,8 +93,11 @@ const resolvers = {
     },
     
     Mutation: {
-        async signUp(_, {email, password, firstName, lastName}) {
-            const user = new User({
+        async signUp(_, {email, password, firstName, lastName}, {req, user}) {
+            if (user)
+                throw new ApolloError('You cannot sign up while you are logged in!', 'ALREADY_AUTHENTICATED');
+            
+            const newUser = new User({
                 'email': email,
                 'password': await bcrypt.hash(password, 10),
                 'firstName': firstName,
@@ -96,52 +105,75 @@ const resolvers = {
             });
             
             // Save user to the database.
-            await user.save()
+            await newUser.save()
                 .catch(err => {
                     throw new ApolloError(err);
                 });
             
-            // Return json web token.
-            return jwt.sign({
-                    user: {
-                        _id: user._id,
-                        email: user.email,
-                    },
-                },
-                'secret!',
-                {expiresIn: '1h'});
-        },
-        
-        async logIn(_, {email, password}) {
-            // Find user with matching email.
-            const user = await User.findOne({'email': email});
-            
-            if (!user)
-                throw new ApolloError(`No user with email ${email}!`,
-                    'INVALID_QUERY_ERROR');
-            
-            // Compare password from arguments to hashed password from db.
-            const match = await bcrypt.compare(password, user.password);
-            
-            if (!match)
-                throw new AuthenticationError('Incorrect password!');
+            req.session.user = newUser;
             
             // Return json web token.
             return jwt.sign(
                 {
-                    user: {
-                        _id: user._id,
-                        email: user.email,
-                    },
+                    user: newUser,
                 },
-                'secret!',
-                {expiresIn: '1h'},
+                privateKey,
+                {
+                    expiresIn: '1h',
+                },
             );
+        },
+        
+        async logIn(_, {email, password}, {req, user}) {
+            if (user)
+                throw new ApolloError('You are already logged in!', 'ALREADY_AUTHENTICATED');
+            
+            // Find user with matching email.
+            const existingUser = await User.findOne({'email': email});
+            
+            if (!existingUser)
+                throw new ApolloError(`No user with email ${email}!`,
+                    'INVALID_QUERY_ERROR');
+            
+            // Compare password from arguments to hashed password from db.
+            const match = await bcrypt.compare(password, existingUser.password);
+            
+            if (!match)
+                throw new AuthenticationError('Incorrect password!');
+            
+            req.session.user = existingUser;
+            
+            // Return json web token.
+            return jwt.sign(
+                {
+                    user: existingUser,
+                },
+                privateKey,
+                {
+                    expiresIn: '1h',
+                },
+            );
+        },
+        
+        async logOut(_, __, {req, res, user}) {
+            if (!user)
+                throw new AuthenticationError(
+                    'You cannot log out before you are logged in.');
+            
+            await req.session.destroy();
+            res.clearCookie('ebimumaykata');
+            return 'Successfully logged out.';
         },
         
         deleteUserById(_, {_id}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
+    
+            // Delete the user's posts first.
+            Post.deleteMany({'creatorID': _id})
+                .catch(err => {
+                    throw new ApolloError(err);
+                });
             
             return User.findByIdAndDelete(_id)
                 .then(user => user)
@@ -155,6 +187,12 @@ const resolvers = {
         deleteAllUsers(_, __, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
+    
+            // Delete all user posts first.
+            Post.deleteMany({})
+                .catch(err => {
+                    throw new ApolloError(err);
+                });
             
             return User.deleteMany({})
                 .then(result => {
@@ -171,12 +209,12 @@ const resolvers = {
                 });
         },
         
-        async createPost(_, {creatorID, message, links}, {user}) {
+        async createPost(_, {message, links}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
             
             const post = new Post({
-                'creatorID': creatorID,
+                'creatorID': user._id,
                 'createdTime': moment()
                     .utc(true)
                     .format(),
