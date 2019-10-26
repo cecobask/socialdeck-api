@@ -13,9 +13,15 @@ const fs = require('fs');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const cors = require('cors');
+const {
+          mongoUsername,
+          mongoPassword,
+          mongoDatabaseName,
+      } = require('./mongoDbCloudCredentials');
 
-// Connect to the local MongoDB instance.
-mongoose.connect('mongodb://localhost:27017/usersDb', {
+// Connect to a cloud MongoDB instance.
+const connString = `mongodb+srv://${mongoUsername}:${mongoPassword}@mongocluster-yevae.mongodb.net/${mongoDatabaseName}?retryWrites=true&w=majority`;
+mongoose.connect(connString, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         useCreateIndex: true,
@@ -24,7 +30,7 @@ mongoose.connect('mongodb://localhost:27017/usersDb', {
     .then(db => {
         const conn = db.connection;
         console.log(
-            `Connected to database ['${conn.name}'] at ${conn.host}:${conn.port}`);
+            `Connected to database ['${mongoDatabaseName}'] at ${conn.host}:${conn.port}`);
     })
     .catch(err => {
         throw new Error(err);

@@ -279,7 +279,6 @@ const resolvers = {
                         'INVALID_QUERY_ERROR');
                 });
         },
-        // updatePost(postID: String!, message: String!, links: [LinkInput!])
         
         updatePost(_, {postID, message, links}, {user}) {
             if (!user) throw new AuthenticationError(

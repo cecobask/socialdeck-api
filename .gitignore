@@ -81,3 +81,6 @@ node_modules/
 
 # Private keys
 *.key
+
+# MongoDB cloud credentials
+mongoDbCloudCredentials.js
