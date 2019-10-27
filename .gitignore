@@ -84,3 +84,6 @@ node_modules/
 
 # MongoDB cloud credentials
 mongoDbCloudCredentials.js
+
+# Environment variables
+.env

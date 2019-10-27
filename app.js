@@ -13,14 +13,10 @@ const fs = require('fs');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const cors = require('cors');
-const {
-          mongoUsername,
-          mongoPassword,
-          mongoDatabaseName,
-      } = require('./mongoDbCloudCredentials');
+require('dotenv').config();
 
 // Connect to a cloud MongoDB instance.
-const connString = `mongodb+srv://${mongoUsername}:${mongoPassword}@mongocluster-yevae.mongodb.net/${mongoDatabaseName}?retryWrites=true&w=majority`;
+const connString = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongocluster-yevae.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`;
 mongoose.connect(connString, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
@@ -30,7 +26,7 @@ mongoose.connect(connString, {
     .then(db => {
         const conn = db.connection;
         console.log(
-            `Connected to database ['${mongoDatabaseName}'] at ${conn.host}:${conn.port}`);
+            `Connected to database ['${process.env.MONGO_DB_NAME}'] at ${conn.host}:${conn.port}`);
     })
     .catch(err => {
         throw new Error(err);
@@ -123,16 +119,20 @@ if (config.ssl)
 // Assumes certificates are in a .ssl folder of the package root.
     server = https.createServer(
         {
-            key: fs.readFileSync('./.ssl/server.key'),
-            cert: fs.readFileSync('./.ssl/server.cert'),
+            key: process.env.SERVER_KEY,
+            cert: process.env.SERVER_CERT,
         },
         app,
     );
 else
     server = http.createServer(app);
 
-server.listen({port: config.port}, () =>
-    console.log(`Server ready at http${config.ssl
-        ? 's'
-        : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`),
+server.listen({port: config.port}, () => {
+        if (!process.env.ON_HEROKU)
+            console.log(`Server ready at http${config.ssl
+                ? 's'
+                : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`);
+        else
+            console.log(`Server ready at ${process.env.HEROKU_APP_URL}${apollo.graphqlPath}`);
+    }
 );

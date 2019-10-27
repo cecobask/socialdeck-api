@@ -6,11 +6,8 @@ const jwt = require('jsonwebtoken');
 const {DateTimeResolver, URLResolver, EmailAddressResolver} = require(
     'graphql-scalars');
 const moment = require('moment');
-const fs = require('fs');
-const path = require('path');
-
-// Get key for signing JWT.
-const privateKey = fs.readFileSync(path.join(__dirname, '..', 'jwtRS256.key'));
+require('dotenv').config();
+const jwtKey = process.env.JWT_SECRET;
 
 const resolvers = {
     DateTime: DateTimeResolver,
@@ -117,7 +114,7 @@ const resolvers = {
                 {
                     user: newUser,
                 },
-                privateKey,
+                jwtKey,
                 {
                     expiresIn: '1h',
                 },
@@ -148,7 +145,7 @@ const resolvers = {
                 {
                     user: existingUser,
                 },
-                privateKey,
+                jwtKey,
                 {
                     expiresIn: '1h',
                 },
