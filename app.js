@@ -39,7 +39,7 @@ mongoose.connect(connString, {
 const configurations = {
     production: {
         ssl: true,
-        port: 7000,
+        port: process.env.PORT || 8080,
         hostname: 'localhost',
     },
     development: {
