@@ -7,13 +7,12 @@ const path = require('path');
 const createError = require('http-errors');
 const cookieParser = require('cookie-parser');
 const indexRouter = require('./routes/index');
-const https = require('https');
-const http = require('http');
-const fs = require('fs');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const cors = require('cors');
-require('dotenv').config();
+const https = require('https');
+require('dotenv')
+    .config();
 
 // Connect to a cloud MongoDB instance.
 const connString = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongocluster-yevae.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`;
@@ -31,21 +30,6 @@ mongoose.connect(connString, {
     .catch(err => {
         throw new Error(err);
     });
-
-const configurations = {
-    production: {
-        ssl: true,
-        port: process.env.PORT || 8080,
-        hostname: 'localhost',
-    },
-    development: {
-        ssl: false,
-        port: 4000,
-        hostname: 'localhost',
-    },
-};
-const environment = process.env.NODE_ENV || 'production';
-const config = configurations[environment];
 
 const app = express();
 app.use(express.json());
@@ -113,26 +97,18 @@ app.use(function(err, req, res) {
     res.render('error');
 });
 
-// Creates the HTTPS or HTTP server, per configuration.
-let server;
-if (config.ssl)
-// Assumes certificates are in a .ssl folder of the package root.
-    server = https.createServer(
-        {
-            key: process.env.SERVER_KEY,
-            cert: process.env.SERVER_CERT,
+// Create https server.
+https.createServer({
+        cert: process.env.SERVER_CERT,
+        key: process.env.SERVER_KEY,
+    },
+    app)
+    .listen({port: process.env.PORT || 7000}, () => {
+            if (!process.env.ON_HEROKU)
+                console.log(
+                    `Server ready at https://localhost:7000${apollo.graphqlPath}`);
+            else
+                console.log(
+                    `Server ready at ${process.env.HEROKU_APP_URL}${apollo.graphqlPath}`);
         },
-        app,
     );
-else
-    server = http.createServer(app);
-
-server.listen({port: config.port}, () => {
-        if (!process.env.ON_HEROKU)
-            console.log(`Server ready at http${config.ssl
-                ? 's'
-                : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`);
-        else
-            console.log(`Server ready at ${process.env.HEROKU_APP_URL}${apollo.graphqlPath}`);
-    }
-);
