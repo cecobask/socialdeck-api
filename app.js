@@ -1,7 +1,6 @@
 const express = require('express');
 const {ApolloServer} = require('apollo-server-express');
 const schema = require('./schema');
-const mongoose = require('mongoose');
 const logger = require('morgan');
 const path = require('path');
 const createError = require('http-errors');
@@ -10,27 +9,9 @@ const indexRouter = require('./routes/index');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const cors = require('cors');
-const https = require('https');
-const http = require('http');
+const dbConnection = require('./dbConnection');
 require('dotenv')
     .config();
-
-// Connect to a cloud MongoDB instance.
-const connString = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@mongocluster-yevae.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`;
-mongoose.connect(connString, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useCreateIndex: true,
-        useFindAndModify: false,
-    })
-    .then(db => {
-        const conn = db.connection;
-        console.log(
-            `Connected to database ['${process.env.MONGO_DB_NAME}'] at ${conn.host}:${conn.port}`);
-    })
-    .catch(err => {
-        throw new Error(err);
-    });
 
 const app = express();
 app.use(express.json());
@@ -48,7 +29,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     // Save Express sessions to MongoDB.
-    store: new MongoStore({mongooseConnection: mongoose.connection}),
+    store: new MongoStore({mongooseConnection: dbConnection}),
     cookie: {
         secure: false,
         maxAge: 60 * 60 * 1000, // 1 hour.
@@ -98,21 +79,4 @@ app.use(function(err, req, res) {
     res.render('error');
 });
 
-// Create server.
-let server;
-if (process.env.ON_HEROKU)
-    server = http.createServer(app);
-else
-    server = https.createServer({
-        cert: process.env.SERVER_CERT,
-        key: process.env.SERVER_KEY,
-    }, app);
-server.listen({port: process.env.PORT || 7000}, () => {
-        if (!process.env.ON_HEROKU)
-            console.log(
-                `Server ready at https://localhost:7000${apollo.graphqlPath}`);
-        else
-            console.log(
-                `Server ready at ${process.env.HEROKU_APP_URL}${apollo.graphqlPath}`);
-    },
-);
+module.exports = app;
