@@ -9,7 +9,7 @@ const indexRouter = require('./routes/index');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const cors = require('cors');
-const dbConnection = require('./dbConnection');
+const db = require('./db');
 require('dotenv')
     .config();
 
@@ -18,10 +18,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(logger('dev'));
 app.use(express.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
+if (process.env.NODE_ENV !== 'test')
+    app.use(logger('dev'));
 // Apply session middleware to Express, used for auth.
 app.use(session({
     name: 'ebimumaykata',
@@ -29,7 +30,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     // Save Express sessions to MongoDB.
-    store: new MongoStore({mongooseConnection: dbConnection}),
+    store: new MongoStore({mongooseConnection: db.connection}),
     cookie: {
         secure: false,
         maxAge: 60 * 60 * 1000, // 1 hour.
