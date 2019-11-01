@@ -10,11 +10,19 @@
     "start": "node server.js",
     "test": "cross-env NODE_ENV=test mocha --exit",
     "lint": "eslint \"**/*.js\"",
-    "lint:fix": "eslint \"**/*.js\" --fix"
+    "lint:fix": "eslint \"**/*.js\" --fix",
+    "compile": "babel ./ --out-dir dist/ --ignore ./node_modules,./test, --copy-files"
   },
   "author": "Tsvetoslav Dimov",
   "license": "ISC",
   "dependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/node": "^7.6.3",
+    "@babel/plugin-transform-runtime": "^7.6.2",
+    "@babel/preset-env": "^7.6.3",
+    "@babel/register": "^7.6.2",
+    "@babel/runtime": "^7.0.0-beta.55",
     "apollo-server": "^2.9.6",
     "apollo-server-express": "^2.9.6",
     "bcrypt": "^3.0.6",

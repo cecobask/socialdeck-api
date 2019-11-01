@@ -88,3 +88,6 @@ mongoDbCloudCredentials.js
 
 # Environment variables
 .env
+
+# Babel transpiled code
+dist/
