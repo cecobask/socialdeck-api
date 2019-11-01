@@ -1,20 +1,42 @@
 const chai = require('chai');
 const expect = chai.expect;
+const url = 'https://localhost:7000';
+const server = require('../server');
 const request = require('supertest');
-const agent = request.agent('https://localhost:7000');
+const agent = request.agent(url, {ca: process.env.SERVER_CERT});
 const User = require('../models/users');
 const Post = require('../models/posts');
-const server = require('../server');
 const debug = require('debug')('SocialDeck-resolvers.test');
 const {MongoMemoryServer} = require('mongodb-memory-server');
 const mongoose = require('mongoose');
-require('dotenv')
-    .config();
+require('dotenv').config();
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 let mongoServer;
+
+const testUser = new User({
+    email: 'test@gmail.com',
+    password: '$2b$10$u8JvPqJ3v08S.s9zL6LOy.su65KlcQr3dmYUqhv0rzUXYqtpgV7O2',
+    firstName: 'Test',
+    lastName: 'Johnson',
+});
+
+function authenticatedAgent(email, password) {
+    return agent
+        .post('/graphql')
+        .set('Accept', 'application/json')
+        .set('Content-Type', 'application/json')
+        .send({
+            query: `mutation logIn {
+                                logIn(
+                                    email: "${email}"
+                                    password: "${password}"
+                                )
+                            }`,
+        });
+}
 
 describe('SocialDeck GraphQL API', function() {
     before(async function() {
-        agent.ca(process.env.SERVER_CERT);
         mongoServer = new MongoMemoryServer();
         const connString = await mongoServer.getConnectionString();
         await mongoose.connect(connString, {
@@ -25,22 +47,32 @@ describe('SocialDeck GraphQL API', function() {
         }, err => {
             if (err) throw err;
         });
+        await User.deleteMany({});
+    });
+    after(async function() {
+        try {
+            await mongoose.disconnect();
+            await mongoServer.stop();
+            await server.close();
+        }
+        catch (e) {
+            console.warn(e);
+        }
     });
     
     describe('User', function() {
-        const testUser = new User({
-            email: 'test@gmail.com',
-            password: '$2b$10$u8JvPqJ3v08S.s9zL6LOy.su65KlcQr3dmYUqhv0rzUXYqtpgV7O2',
-            firstName: 'Test',
-            lastName: 'Johnson',
+        before(async function() {
+            await User.create(testUser, err => {
+                if (err) throw err;
+            });
         });
-        beforeEach(async function() {
-            await testUser.save();
+        after(async function() {
+            await User.deleteMany({'email': {$in:[testUser.email, 'valid@gmail.com']}});
         });
         describe('logIn() - mutation', function() {
             it('should be able to log in with valid credentials',
                 async function() {
-                    await agent
+                    await request(url)
                         .post('/graphql')
                         .set('Accept', 'application/json')
                         .set('Content-Type', 'application/json')
@@ -71,13 +103,42 @@ describe('SocialDeck GraphQL API', function() {
                                     'ebimumaykata'));
                         });
                 });
+    
+            it('should return error if the user is already logged in', async function() {
+                await authenticatedAgent(testUser.email, 'secret');
+                await agent
+                    .post('/graphql')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        query: `mutation logIn {
+                                logIn(
+                                    email: "${testUser.email}"
+                                    password: "secret"
+                                )
+                            }`,
+                    })
+                    .expect(200)
+                    .then(res => {
+                        const response = JSON.parse(res.text);
+                        expect(response.errors)
+                            .to
+                            .have
+                            .length(1);
+                        expect(response.errors[0].extensions.code)
+                            .to
+                            .eql('ALREADY_AUTHENTICATED');
+                        expect(response.errors[0].message).to.equal('You are already logged in!');
+                        expect(response.data).to.be.null;
+                    });
+            });
         });
         
         describe('logOut() - mutation', function() {
             it('should be able to log out an authenticated user',
                 async function() {
-                    await agent
-                        .post('/graphql')
+                    await authenticatedAgent(testUser.email, 'secret');
+                    await agent.post('/graphql')
                         .set('Accept', 'application/json')
                         .set('Content-Type', 'application/json')
                         .send({
@@ -95,13 +156,14 @@ describe('SocialDeck GraphQL API', function() {
                                 .satisfy(result => result ===
                                                    'Successfully logged out.');
                         });
-                });
+                },
+            );
         });
         
         describe('signUp() - mutation', function() {
             it('should be able to sign up with a valid email',
                 async function() {
-                    await agent
+                    await request(url)
                         .post('/graphql')
                         .set('Accept', 'application/json')
                         .set('Content-Type', 'application/json')
@@ -127,47 +189,34 @@ describe('SocialDeck GraphQL API', function() {
                                 .satisfy(token => token.startsWith('eyJ'));
                         });
                 });
-            it('should return error if email is not unique', function(done) {
-                agent
-                    .post('/graphql')
-                    .set('Accept', 'application/json')
-                    .send({
-                        query: `mutation signUp {
+            it('should return error if email is not unique', async function() {
+                await User.create(testUser)
+                    .then(user => {
+                        request(url)
+                            .post('/graphql')
+                            .set('Accept', 'application/json')
+                            .send({
+                                query: `mutation signUp {
                                 signUp(
-                                    email: "${testUser.email}"
-                                    password: "${testUser.password}"
-                                    firstName: "${testUser.firstName}"
-                                    lastName: "${testUser.lastName}"
+                                    email: "${user.email}"
+                                    password: "${user.password}"
+                                    firstName: "${user.firstName}"
+                                    lastName: "${user.lastName}"
                                 )
                             }`,
-                    })
-                    .expect(200)
-                    .then(res => {
-                        const response = JSON.parse(res.text);
-                        expect(response.errors)
-                            .to
-                            .have
-                            .length(1);
-                        expect(response.data).to.be.null;
-                        done();
+                            })
+                            .expect(200)
+                            .then(res => {
+                                const response = JSON.parse(res.text);
+                                console.log(response);
+                                expect(response.errors)
+                                    .to
+                                    .have
+                                    .length(1);
+                                expect(response.data).to.be.null;
+                            });
                     });
             });
         });
-        afterEach(async function() {
-            await User.deleteMany({}, err => {
-                if (err) debug(err);
-            });
-        });
-    });
-    
-    after(async function() {
-        try {
-            await mongoose.disconnect();
-            await mongoServer.stop();
-            await server.close();
-        }
-        catch (e) {
-            console.warn(e);
-        }
     });
 });
