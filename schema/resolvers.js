@@ -92,7 +92,16 @@ const resolvers = {
     Mutation: {
         async signUp(_, {email, password, firstName, lastName}, {req, user}) {
             if (user)
-                throw new ApolloError('You cannot sign up while you are logged in!', 'ALREADY_AUTHENTICATED');
+                throw new ApolloError(
+                    'You cannot sign up while you are logged in!',
+                    'ALREADY_AUTHENTICATED');
+            
+    
+            // Check if user exists in the database.
+            const existingUser = await User.findOne({'email': email});
+            
+            if (existingUser)
+                throw new ApolloError(`User with email ${email} already exists!`);
             
             const newUser = new User({
                 'email': email,
@@ -155,7 +164,7 @@ const resolvers = {
         async logOut(_, __, {req, res, user}) {
             if (!user)
                 throw new AuthenticationError(
-                    'You cannot log out before you are logged in.');
+                    'You cannot log out before you are logged in!');
             
             await req.session.destroy();
             res.clearCookie('ebimumaykata');
