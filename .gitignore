@@ -69,6 +69,7 @@ fabric.properties
 
 # nyc test coverage
 .nyc_output
+coverage/
 
 # Node.js packages
 node_modules/
