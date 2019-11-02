@@ -31,7 +31,7 @@ const resolvers = {
                 .then(users => {
                     if (!users.length)
                         throw new ApolloError(
-                            'No users in the database.',
+                            'No users in the database!',
                             'INVALID_QUERY_ERROR');
                     
                     return users;
@@ -54,7 +54,7 @@ const resolvers = {
         // Get currently authenticated user.
         me(_, __, {user}) {
             if (!user)
-                throw new AuthenticationError('You are not authenticated!');
+                throw new AuthenticationError('You must authenticate first!');
             
             return User.findById(user._id);
         },

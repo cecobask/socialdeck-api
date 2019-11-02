@@ -15,7 +15,8 @@
     "compile": "babel ./ --out-dir dist/ --ignore ./node_modules,./test, --copy-files",
     "prebuild": "npm-run-all test clean",
     "build": "npm run compile",
-    "postbuild": "npm start"
+    "postbuild": "npm start",
+    "test:report": "cross-env NODE_ENV=test nyc mocha --exit"
   },
   "author": "Tsvetoslav Dimov",
   "license": "ISC",
@@ -47,6 +48,7 @@
     "graphql-tools": "^4.0.5",
     "http-errors": "^1.7.3",
     "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.15",
     "mocha": "^6.2.2",
     "moment": "^2.24.0",
     "mongodb-memory-server": "^6.0.1",
