@@ -59,7 +59,7 @@ describe('SocialDeck GraphQL API', function() {
     });
     
     describe('\u2022 Authentication', function() {
-        describe('\u2043 logIn() - mutation', function() {
+        describe('\u2043 logIn()', function() {
             it('should be able to log in with valid credentials',
                 async function() {
                     await request(url)
@@ -194,7 +194,7 @@ describe('SocialDeck GraphQL API', function() {
                 });
         });
         
-        describe('\u2043 logOut() - mutation', function() {
+        describe('\u2043 logOut()', function() {
             it('should be able to log out an authenticated user',
                 async function() {
                     await authenticateAgent(testUser.email, 'secret');
@@ -258,7 +258,7 @@ describe('SocialDeck GraphQL API', function() {
                 });
         });
         
-        describe('\u2043 signUp() - mutation', function() {
+        describe('\u2043 signUp()', function() {
             it('should be able to sign up with a valid email',
                 async function() {
                     await User.deleteOne({'email': 'valid@gmail.com'});
@@ -360,7 +360,7 @@ describe('SocialDeck GraphQL API', function() {
     });
     
     describe('\u2022 Queries', function() {
-        describe('\u2043 me() - query', function() {
+        describe('\u2043 me()', function() {
             it('should be able to return currently authenticated user',
                 async function() {
                     await authenticateAgent(testUser.email, 'secret');
@@ -453,7 +453,7 @@ describe('SocialDeck GraphQL API', function() {
                 });
         });
         
-        describe('\u2043 users() - query', function() {
+        describe('\u2043 users()', function() {
             it('should return all users from the db', async function() {
                 await authenticateAgent(testUser2.email, 'secret');
                 await agent
@@ -584,6 +584,370 @@ describe('SocialDeck GraphQL API', function() {
                                 .equal('INVALID_QUERY_ERROR');
                         });
                 });
+        });
+        
+        describe('\u2043 findUserById()', function() {
+            it('should fetch existing user', async function() {
+                await authenticateAgent(testUser.email, 'secret');
+                await agent
+                    .post('/graphql')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        query: `query {
+                                    findUserById(_id:"${testUser2._id}") {
+                                        _id
+                                        email
+                                        password
+                                        firstName
+                                        lastName
+                                        posts {
+                                            _id
+                                            creatorID
+                                            createdTime
+                                            message
+                                            updatedTime
+                                            links
+                                            shares
+                                        }
+                                    }
+                                }`,
+                    })
+                    .expect(200)
+                    .then(res => {
+                        const response = JSON.parse(res.text);
+                        const user = response.data.findUserById;
+                        expect(response.errors).to.be.undefined;
+                        expect(user).to.not.be.null;
+                        expect(user.email)
+                            .to
+                            .equal(testUser2.email);
+                        expect(user.firstName)
+                            .to
+                            .equal(testUser2.firstName);
+                        expect(user.lastName)
+                            .to
+                            .equal(testUser2.lastName);
+                        expect(user.posts)
+                            .to
+                            .have
+                            .length(1)
+                            .and
+                            .satisfy(posts =>
+                                user.posts[0].message === posts[0].message,
+                            );
+                    });
+            });
+            it('should return error if the user has not logged in',
+                async function() {
+                    await request(url)
+                        .post('/graphql')
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .send({
+                            query: `query {
+                                    findUserById(_id:"${testUser2._id}") {
+                                        _id
+                                        email
+                                        password
+                                        firstName
+                                        lastName
+                                        posts {
+                                            _id
+                                            creatorID
+                                            createdTime
+                                            message
+                                            updatedTime
+                                            links
+                                            shares
+                                        }
+                                    }
+                                }`,
+                        })
+                        .expect(200)
+                        .then(res => {
+                            const response = JSON.parse(res.text);
+                            expect(response.data).to.be.null;
+                            expect(response.errors).to.not.be.null;
+                            expect(response.errors)
+                                .to
+                                .have
+                                .length(1);
+                            expect(response.errors[0].message)
+                                .to
+                                .equal('You must authenticate first!');
+                            expect(response.errors[0].extensions.code)
+                                .to
+                                .equal('UNAUTHENTICATED');
+                        });
+                });
+            it('should return error if the user does not exist',
+                async function() {
+                    await authenticateAgent(testUser.email, 'secret');
+                    await User.deleteOne({'_id': testUser2._id});
+                    await agent
+                        .post('/graphql')
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .send({
+                            query: `query {
+                                    findUserById(_id:"${testUser2._id}") {
+                                        _id
+                                        email
+                                        password
+                                        firstName
+                                        lastName
+                                        posts {
+                                            _id
+                                            creatorID
+                                            createdTime
+                                            message
+                                            updatedTime
+                                            links
+                                            shares
+                                        }
+                                    }
+                                }`,
+                        })
+                        .expect(200)
+                        .then(res => {
+                            const response = JSON.parse(res.text);
+                            expect(response.data).to.be.null;
+                            expect(response.errors).to.not.be.null;
+                            expect(response.errors)
+                                .to
+                                .have
+                                .length(1);
+                            expect(response.errors[0].extensions.code)
+                                .to
+                                .equal('INVALID_QUERY_ERROR');
+                            expect(response.errors[0].message)
+                                .to
+                                .equal(
+                                    `No user found with ID ${testUser2._id}`);
+                        });
+                });
+        });
+    });
+    describe('\u2022 Mutations', function() {
+        describe('\u2043 deleteUserById()', function() {
+            it('should delete an existing user', async function() {
+                await authenticateAgent(testUser.email, 'secret');
+                await agent
+                    .post('/graphql')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        query: `mutation {
+                                    deleteUserById(_id:"${testUser2._id}") {
+                                        _id
+                                        email
+                                        password
+                                        firstName
+                                        lastName
+                                        posts {
+                                            _id
+                                            creatorID
+                                            createdTime
+                                            message
+                                            updatedTime
+                                            links
+                                            shares
+                                        }
+                                    }
+                                }`,
+                    })
+                    .expect(200)
+                    .then(async res => {
+                        const response = JSON.parse(res.text);
+                        const user = response.data.deleteUserById;
+                        const users = await User.find({});
+                        expect(response.errors).to.be.undefined;
+                        expect(user).to.not.be.null;
+                        expect(user.email)
+                            .to
+                            .equal(testUser2.email);
+                        expect(user.firstName)
+                            .to
+                            .equal(testUser2.firstName);
+                        expect(user.lastName)
+                            .to
+                            .equal(testUser2.lastName);
+                        expect(user.posts)
+                            .to
+                            .be
+                            .empty;
+                        expect(users).to.have.length(1);
+                    });
+            });
+            it('should return error if the user has not logged in', async function() {
+                await request(url)
+                    .post('/graphql')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        query: `mutation {
+                                    deleteUserById(_id:"${testUser2._id}") {
+                                        _id
+                                        email
+                                        password
+                                        firstName
+                                        lastName
+                                        posts {
+                                            _id
+                                            creatorID
+                                            createdTime
+                                            message
+                                            updatedTime
+                                            links
+                                            shares
+                                        }
+                                    }
+                                }`,
+                    })
+                    .expect(200)
+                    .then(res => {
+                        const response = JSON.parse(res.text);
+                        expect(response.data).to.be.null;
+                        expect(response.errors).to.not.be.null;
+                        expect(response.errors)
+                            .to
+                            .have
+                            .length(1);
+                        expect(response.errors[0].message)
+                            .to
+                            .equal('You must authenticate first!');
+                        expect(response.errors[0].extensions.code)
+                            .to
+                            .equal('UNAUTHENTICATED');
+                    });
+            });
+            it('should return error if the user does not exist',
+                async function() {
+                    await authenticateAgent(testUser.email, 'secret');
+                    await User.deleteOne({'_id': testUser2._id});
+                    await agent
+                        .post('/graphql')
+                        .set('Accept', 'application/json')
+                        .set('Content-Type', 'application/json')
+                        .send({
+                            query: `mutation {
+                                    deleteUserById(_id:"${testUser2._id}") {
+                                        _id
+                                        email
+                                        password
+                                        firstName
+                                        lastName
+                                        posts {
+                                            _id
+                                            creatorID
+                                            createdTime
+                                            message
+                                            updatedTime
+                                            links
+                                            shares
+                                        }
+                                    }
+                                }`,
+                        })
+                        .expect(200)
+                        .then(res => {
+                            const response = JSON.parse(res.text);
+                            expect(response.data).to.be.null;
+                            expect(response.errors).to.not.be.null;
+                            expect(response.errors)
+                                .to
+                                .have
+                                .length(1);
+                            expect(response.errors[0].extensions.code)
+                                .to
+                                .equal('INVALID_QUERY_ERROR');
+                            expect(response.errors[0].message)
+                                .to
+                                .equal(
+                                    `No user found with ID ${testUser2._id}`);
+                        });
+                });
+        });
+        describe('\u2043 deleteAllUsers()', function() {
+            it('should delete all existing users', async function() {
+                await authenticateAgent(testUser.email, 'secret');
+                await agent
+                    .post('/graphql')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        query: `mutation {
+                                    deleteAllUsers
+                                }`,
+                    })
+                    .expect(200)
+                    .then(async res => {
+                        const response = JSON.parse(res.text);
+                        const users = await User.find({});
+                        expect(response.data).to.not.be.null;
+                        expect(response.data.deleteAllUsers).to.equal('Successfully deleted all users!');
+                        expect(users).to.be.empty;
+                    });
+            });
+            it('should return error if the user has not logged in', async function() {
+                await request(url)
+                    .post('/graphql')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        query: `mutation {
+                                    deleteAllUsers
+                                }`,
+                    })
+                    .expect(200)
+                    .then(res => {
+                        const response = JSON.parse(res.text);
+                        expect(response.data).to.be.null;
+                        expect(response.errors).to.not.be.null;
+                        expect(response.errors)
+                            .to
+                            .have
+                            .length(1);
+                        expect(response.errors[0].message)
+                            .to
+                            .equal('You must authenticate first!');
+                        expect(response.errors[0].extensions.code)
+                            .to
+                            .equal('UNAUTHENTICATED');
+                    });
+            });
+            it('should return error if the user database is empty', async function() {
+                await authenticateAgent(testUser.email, 'secret');
+                await User.deleteMany({});
+                await agent
+                    .post('/graphql')
+                    .set('Accept', 'application/json')
+                    .set('Content-Type', 'application/json')
+                    .send({
+                        query: `mutation {
+                                    deleteAllUsers
+                                }`,
+                    })
+                    .expect(200)
+                    .then(async res => {
+                        const response = JSON.parse(res.text);
+                        const users = await User.find({});
+                        expect(users).to.be.empty;
+                        expect(response.data).to.be.null;
+                        expect(response.errors).to.not.be.null;
+                        expect(response.errors)
+                            .to
+                            .have
+                            .length(1);
+                        expect(response.errors[0].extensions.code)
+                            .to
+                            .equal('INVALID_QUERY_ERROR');
+                        expect(response.errors[0].message)
+                            .to
+                            .equal('No users in the database!');
+                    });
+            });
         });
     });
 });

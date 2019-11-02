@@ -6,7 +6,8 @@ const jwt = require('jsonwebtoken');
 const {DateTimeResolver, URLResolver, EmailAddressResolver} = require(
     'graphql-scalars');
 const moment = require('moment');
-require('dotenv').config();
+require('dotenv')
+    .config();
 const jwtKey = process.env.JWT_SECRET;
 
 const resolvers = {
@@ -38,17 +39,17 @@ const resolvers = {
                 });
         },
         
-        findUserById(_, {_id}, {user}) {
+        async findUserById(_, {_id}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
             
-            return User.findById(_id)
-                .then(user => user)
-                .catch(err => {
-                    throw new ApolloError(
-                        `No user found with this ID! ${err}`,
-                        'INVALID_QUERY_ERROR');
-                });
+            const foundUser = await User.findById(_id);
+            
+            if (!foundUser) throw new ApolloError(
+                `No user found with ID ${_id}`,
+                'INVALID_QUERY_ERROR');
+            
+            return foundUser;
         },
         
         // Get currently authenticated user.
@@ -96,12 +97,12 @@ const resolvers = {
                     'You cannot sign up while you are logged in!',
                     'ALREADY_AUTHENTICATED');
             
-    
             // Check if user exists in the database.
             const existingUser = await User.findOne({'email': email});
             
             if (existingUser)
-                throw new ApolloError(`User with email ${email} already exists!`);
+                throw new ApolloError(
+                    `User with email ${email} already exists!`);
             
             const newUser = new User({
                 'email': email,
@@ -132,7 +133,8 @@ const resolvers = {
         
         async logIn(_, {email, password}, {req, user}) {
             if (user)
-                throw new ApolloError('You are already logged in!', 'ALREADY_AUTHENTICATED');
+                throw new ApolloError('You are already logged in!',
+                    'ALREADY_AUTHENTICATED');
             
             // Find user with matching email.
             const existingUser = await User.findOne({'email': email});
@@ -171,29 +173,32 @@ const resolvers = {
             return 'Successfully logged out.';
         },
         
-        deleteUserById(_, {_id}, {user}) {
+        async deleteUserById(_, {_id}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-    
+            
+            const userToDelete = await User.findById(_id);
+            
+            if (!userToDelete)
+                throw new ApolloError(
+                    `No user found with ID ${_id}`,
+                    'INVALID_QUERY_ERROR');
+            
             // Delete the user's posts first.
             Post.deleteMany({'creatorID': _id})
                 .catch(err => {
                     throw new ApolloError(err);
                 });
             
-            return User.findByIdAndDelete(_id)
-                .then(user => user)
-                .catch(err => {
-                    throw new ApolloError(
-                        `No user found with this ID! ${err}`,
-                        'INVALID_QUERY_ERROR');
-                });
+            await User.deleteOne({'_id': _id});
+            
+            return userToDelete;
         },
         
         deleteAllUsers(_, __, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-    
+            
             // Delete all user posts first.
             Post.deleteMany({})
                 .catch(err => {
@@ -209,9 +214,6 @@ const resolvers = {
                             'INVALID_QUERY_ERROR');
                     
                     return 'Successfully deleted all users!';
-                })
-                .catch(err => {
-                    throw new ApolloError(err);
                 });
         },
         
