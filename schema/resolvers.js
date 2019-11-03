@@ -46,7 +46,7 @@ const resolvers = {
             const foundUser = await User.findById(_id);
             
             if (!foundUser) throw new ApolloError(
-                `No user found with ID ${_id}`,
+                `No user with ID ${_id} found!`,
                 'INVALID_QUERY_ERROR');
             
             return foundUser;
@@ -60,7 +60,7 @@ const resolvers = {
             return User.findById(user._id);
         },
         
-        // Get all users in the database.
+        // Get all posts in the database.
         posts(_, __, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
@@ -69,24 +69,24 @@ const resolvers = {
                 .then(posts => {
                     if (!posts.length)
                         throw new ApolloError(
-                            'No posts in the database.',
+                            'No posts in the database!',
                             'INVALID_QUERY_ERROR');
                     
                     return posts;
                 });
         },
         
-        findPostById(_, {_id}, {user}) {
+        async findPostById(_, {_id}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-            
-            return Post.findById(_id)
-                .then(post => post)
-                .catch(err => {
-                    throw new ApolloError(
-                        `No post found with this ID! ${err}`,
-                        'INVALID_QUERY_ERROR');
-                });
+    
+            const foundPost = await Post.findById(_id);
+    
+            if (!foundPost) throw new ApolloError(
+                `No post with ID ${_id} found!`,
+                'INVALID_QUERY_ERROR');
+    
+            return foundPost;
         },
     },
     
@@ -112,10 +112,7 @@ const resolvers = {
             });
             
             // Save user to the database.
-            await newUser.save()
-                .catch(err => {
-                    throw new ApolloError(err);
-                });
+            await newUser.save();
             
             req.session.user = newUser;
             
@@ -181,7 +178,7 @@ const resolvers = {
             
             if (!userToDelete)
                 throw new ApolloError(
-                    `No user found with ID ${_id}`,
+                    `No user with ID ${_id} found!`,
                     'INVALID_QUERY_ERROR');
             
             // Delete the user's posts first.
@@ -217,7 +214,7 @@ const resolvers = {
                 });
         },
         
-        async createPost(_, {message, links}, {user}) {
+        createPost(_, {message, links}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
             
@@ -231,23 +228,23 @@ const resolvers = {
             });
             
             // Save post to the database.
-            return await post.save()
-                .catch(err => {
-                    throw new ApolloError(err);
-                });
+            return post.save();
         },
         
-        deletePostById(_, {_id}, {user}) {
+        async deletePostById(_, {_id}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-            
-            return Post.findByIdAndDelete(_id)
-                .then(post => post)
-                .catch(err => {
-                    throw new ApolloError(
-                        `No post found with this ID! ${err}`,
-                        'INVALID_QUERY_ERROR');
-                });
+    
+            const postToDelete = await Post.findById(_id);
+    
+            if (!postToDelete)
+                throw new ApolloError(
+                    `No post with ID ${_id} found!`,
+                    'INVALID_QUERY_ERROR');
+    
+            await Post.deleteOne({'_id': _id});
+    
+            return postToDelete;
         },
         
         deleteAllPosts(_, __, {user}) {
