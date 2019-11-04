@@ -186,6 +186,30 @@ The `shares` field stores an array of Users `_id` values. Initially it is null, 
     45 passing (3s)
 ~~~
 
-## Extra features.
+## Extra features
 
-. . . . Briefly state any extra features of your assignment work that you feel should be high-lighted. This relates to 'independent learning' you have undertaken during the assignment . . . . .
+### GraphQL API
+The assignment requirements stated that we must create a REST API and write tests for it. Having heard of GraphQL before,
+I knew about its advantages over REST and was curious to try it out for the first time. After a discussion with my
+lecturer, we agreed that GraphQL would suit this project with one condition - to provide proper documentation about its
+usage and pros/cons.
+
+GraphQL comes with built-in scalar types (Int, Float, String, Boolean and ID). While this covers most of the use cases,
+often the developer would need custom type like Date, Email, URL and so on. I used [graphql-scalars](https://github.com/Urigo/graphql-scalars)
+package, that provides a collection of scalars that can be used out of the box. I used scalar types `Email`, `Date` and 
+`Email` to support validation in my GraphQL API. 
+
+### Authentication
+By default [Express](https://expressjs.com/) requests are sequential and no request can be linked
+to each other. Which means that users cannot be identified unless using JWT token and Authorization header, or some other
+mechanism. That's why I decided to implement [express-session](https://www.npmjs.com/package/express-session). By using 
+it every user of the API will be assigned a unique session, which allowed me to store the user state across the requests
+to the API. The sessions are persisted on MongoDB and I've set them to expire 1 hour after creation. All the API queries
+and mutations require the user to authenticate before they get access to the data. However, there are two GraphQL mutations
+that don't require authentication. They are `logIn()` and `signUp()`. After successful authentication, the user doesn't
+need to provide credentials as their session is stored in a cookie, accessible in all the requests.
+
+When a user registers, their password gets stored on the database. Storing passwords as plain text is a bad practice.
+For that reason I used [bcrypt](https://www.npmjs.com/package/bcrypt) to store a hash of the original user's password.
+In future `logIn()` requests I compare the hashed password from the database with the password that the user provides on
+log in and catch relevant errors, which then I send back to the user.
