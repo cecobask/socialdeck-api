@@ -1,217 +1,191 @@
-# SocialDeck
+# Assignment 1 - Agile Software Practice
+
+Name: Tsvetoslav Dimov
+
+## Overview
 
 SocialDeck is currently an API that enables users to manage their posts (Create, Read, Update, Delete, Share). It uses GraphQL, instead of REST because of the following reasons:
   - Declarative data fetching: there's no need to call multiple endpoints to access various data, like with traditional REST approach. Instead, you specify the exact data you need and GraphQL gives you exactly what you asked for.
-  - Improved performance: GraphQL improves performance by helping avoid round trips to the server and reducing payload size. If one want to take advantage of GraphQL, they don't even have to scrape their existing REST API.
+  - Improved performance: GraphQL improves performance by helping avoid round trips to the server and reducing payload size. If one want to take advantage of GraphQL, they don't even have to scrape their existing REST API, as GraphQL can be built on top of REST.
   - GraphQL was developed by Facebook and it's currently open-sourced. It's quickly gaining popularity. A few of its the most notable users are Airbnb, GitHub, The New York Times, Coursera.
 
-This API was built using Node.js, Express and Apollo Server. The data is persisted in a cloud Mongo database (Atlas).
-## Technologies used
-* [apollo-server](https://www.npmjs.com/package/apollo-server) - Community-maintained open-source GraphQL server.
-* [bcrypt](https://www.npmjs.com/package/bcrypt) - A library to help you hash passwords.
-* [connect-mongo](https://www.npmjs.com/package/connect-mongo) - MongoDB session store for Connect and Express.
-* [cookie-parser](https://www.npmjs.com/package/cookie-parser) - Parse Cookie header and populate req.cookies with an object keyed by the cookie names.
-* [eslint](https://www.npmjs.com/package/eslint) - tool for identifying and reporting on patterns found in ECMAScript/JavaScript code.
-* [node.js](https://nodejs.org/en/) - evented I/O for the backend
-* [express](https://www.npmjs.com/package/express) - Fast, unopinionated, minimalist web framework for node.
-* [express-session](https://www.npmjs.com/package/express-session) - Simple cookie-based session middleware.
-* [graphql](https://www.npmjs.com/package/graphql) - A Query Language and Runtime which can target any service.
-* [graphql-scalars](https://www.npmjs.com/package/graphql-scalars) - A library of custom GraphQL scalar types for creating precise type-safe GraphQL schemas.
-* [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) - An implementation of JSON Web Tokens.
-* [moment](https://www.npmjs.com/package/moment) - Parse, validate, manipulate, and display dates
-* [mongoose](https://www.npmjs.com/package/mongoose) - Mongoose is a MongoDB object modeling tool designed to work in an asynchronous environment.
-* [morgan](https://www.npmjs.com/package/morgan) - HTTP request logger middleware for node.js.
+## API endpoints
+GraphQL is typically served over HTTP via a single endpoint which expresses the full set of capabilities of the service.
+This is in contrast to REST APIs which expose a suite of URLs each of which expose a single resource.
 
+The GraphQL endpoint for my API is '/graphql'.
 
-## Usage
-In order to use the API, one has to login or signup, otherwise access to its data will be denied.
- ```
- mutation login {
-  logIn(email: "user@gmail.com", password: "secret")
-}
+GraphQL comes with an in-browser API explorer. If you navigate to /graphql endpoint in your browser, you will see it in action.
+There you can check all existing queries and mutations if you click on the button **DOCS**, located on the right side of the page.
+Underneath it you will see another button **SCHEMA**, which will show you the full API schema.
+It’s also possible to write queries and mutations directly on the left tab and check their execution by clicking the **PLAY** icon in the middle of the screen.
 
-mutation signUp {
-  signUp(
-    email: "user@gmail.com"
-    password: "secret"
-    firstName: "George"
-    lastName: "Washington"
-  )
-}
- ```
- 
- After login or signup the user will have access to the following Queries and Mutations (the code snippet lists all the available fields to fetch, meaning the user doesn't have to request all the attributes if they don't need everything):
- ```
- mutation logOut {
-  logOut
-}
+If you'd like to see a video demo of the Explorer and API calls, [CLICK HERE](https://www.youtube.com/watch?v=5oLLi0NRc-g&feature=youtu.be).
 
-query users {
-  users {
-    _id
-    email
-    password
-    firstName
-    lastName
-    posts {
-      _id
-      creatorID
-      createdTime
-      message
-      updatedTime
-      links
-      shares
+* __Queries__
+    * users: [User!]! - Gets a list of all users.
+    * findUserById(_id: String!): User! - Finds a user by ID.
+    * me: User! - Gets currently authenticated user.
+    * posts: [Post!]! - Gets a list of all user posts.
+    * findPostById(_id: String!): Post! - Finds a post by ID.
+
+* __Mutations__
+    * signUp(email: EmailAddress!, password: String!, firstName: String!, lastName: String!): String! - Takes in the specified arguments, creates a new user and signs them in.
+    * logIn(email: EmailAddress!, password: String!): String! - Takes in the specified arguments and logs the user in.
+    * logOut: String! - Logs out currently authenticated user, if present. Returns a request status message.
+    * deleteUserById(_id: String!): User! - Deletes a user by its ID. Returns the deleted document.
+    * deleteAllUsers: String! - Deletes all users. Returns a request status message.
+    * createPost(message: String, links: [LinkInput!]): Post! - Takes in the specified arguments and creates a new post. Returns the created document.
+    * sharePost(postID: String!): Post! - Adds the ID of currently authenticated user to the *shares* array of the specified posts. Returns the shared post document.
+    * updatePost(postID: String!, message: String!, links: [LinkInput!]): Post! - Takes in the specified arguments to update an existing post. Returns the updated document.
+    * deletePostById(_id: String!): Post! - Deletes a post by its ID. Returns the deleted document.
+    * deleteAllPosts: String! - Deletes all posts. Returns a request status message.
+
+## Data model
+Simply put, the database stores users and their posts.
+
+The `password` field is an encrypted value of their original password, created by a package called *bcrypt*.
+It is then use to verify if hashed value of the original password matches the provided password argument to mutations
+like logIn() and signUp().
+
+The `email` field should be an email address of valid format. If it is not, the API will complain and not perform the
+creation of User object.
+
+Posts and Users are stored in separate databases.
+Using GraphQL I was able to make a connection between a Users and their Posts. I use the User's `_id` to fetch their
+Posts collection from the database and populate it as the value of `posts` array in the User objects.
+
+Each Post object has a field `creatorID`, which references a value from the User database.
+
+The `createdTime` and `updatedTime` fields are generated by a package called 'moment'. It gets the current date and time
+and stores it in UTC format, keeping the local time. Initially `updateTime` would null, but once a Post gets updated,
+this value changes to the exact time when the update happened.
+
+The `links` field stores array of URLs and they are checked if they are of valid URL format before being saved to the database.
+
+The `shares` field stores an array of Users `_id` values. Initially it is null, until the Post object gets shared by a User.
+```json
+[
+    {
+        "_id": "5dbff437f482e01d03fecd4b",
+        "email": "test@gmail.com",
+        "password": "$2b$10$u8JvPqJ3v08S.s9zL6LOy.su65KlcQr3dmYUqhv0rzUXYqtpgV7O2",
+        "firstName": "Test",
+        "lastName": "Johnson",
+        "posts": [
+            {
+                "_id": "5dbff437f482e01d03fecd4d",
+                "creatorID": "5dbff437f482e01d03fecd4b",
+                "createdTime": "2019-11-04T09:49:43.000Z",
+                "message": "Test message by user 1...",
+                "updatedTime": "2019-11-04T10:50:01.000Z",
+                "links": [
+                    "https://github.com/Urigo/graphql-scalars/",
+                    "https://moodle.wit.ie/"
+                ],
+                "shares": [
+                    "5dbff437f482e01d03fecd4c"
+                ]
+            }
+        ]
+    },
+    {
+        "_id": "5dbff437f482e01d03fecd4c",
+        "email": "tfarrell@yahoo.com",
+        "password": "$2b$10$u8JvPqJ3v08S.s9zL6LOy.su65KlcQr3dmYUqhv0rzUXYqtpgV7O2",
+        "firstName": "Thomas",
+        "lastName": "Farrell",
+        "posts": [
+            {
+                "_id": "5dbff437f482e01d03fecd4e",
+                "creatorID": "5dbff437f482e01d03fecd4c",
+                "createdTime": "2019-11-04T09:49:43.000Z",
+                "message": "Test message by user 2...",
+                "updatedTime": null,
+                "links": [
+                    "https://mongoosejs.com/docs/api/",
+                    "https://developer.github.com/"
+                ],
+                "shares": []
+            }
+        ]
     }
-  }
-}
-
-query findUserById {
-  findUserById(_id: "5db3386383e66f23b3e566d5") {
-    _id
-    email
-    password
-    firstName
-    lastName
-    posts {
-      _id
-      creatorID
-      createdTime
-      message
-      updatedTime
-      links
-      shares
-    }
-  }
-}
-
-mutation deleteUserById {
-  deleteUserById(_id: "5db345f0a584872d59036fa9") {
-    _id
-    email
-    password
-    firstName
-    lastName
-    posts {
-      _id
-      creatorID
-      createdTime
-      message
-      updatedTime
-      links
-      shares
-    }
-  }
-}
-
-mutation deleteAllUsers {
-  deleteAllUsers
-}
-
-query me {
-  me {
-    _id
-    email
-    password
-    firstName
-    lastName
-    posts {
-      _id
-      creatorID
-      createdTime
-      message
-      updatedTime
-      links
-      shares
-    }
-  }
-}
-
-query posts {
-  posts {
-    _id
-    creatorID
-    createdTime
-    message
-    updatedTime
-    links
-    shares
-  }
-}
-
-query findPostById {
-  findPostById(_id: "5db338f6960a912528394e5b") {
-    _id
-    creatorID
-    createdTime
-    message
-    updatedTime
-    links
-    shares
-  }
-}
-
-mutation createPost {
-  createPost(
-    message: "My new post."
-    links: [
-      {
-        url: "https://github.com/Urigo/graphql-scalars/blob/master/tests/URL.test.ts"
-      }
-      { url: "https://moodle.wit.ie" }
-    ]
-  ) {
-    _id
-    creatorID
-    createdTime
-    message
-    updatedTime
-    links
-    shares
-  }
-}
-
-mutation deletePostById {
-  deletePostById(_id: "5daf57cad5e3df23241ba71e") {
-    _id
-    creatorID
-    createdTime
-    message
-    updatedTime
-    links
-    shares
-  }
-}
-
-mutation deleteAllPosts {
-  deleteAllPosts
-}
-
-mutation sharePost {
-  sharePost(postID: "5db34733a584872d59036fab") {
-    _id
-    creatorID
-    createdTime
-    message
-    shares
-  }
-}
-
-mutation updatePost {
-  updatePost(
-    postID: "5db34733a584872d59036fab"
-    message: "This post was editted."
-    links: [
-      { url: "https://localhost:7000/graphql" }
-      { url: "https://moodle.wit.ie/login/index.php" }
-    ]
-  ) {
-    _id
-    creatorID
-    createdTime
-    message
-    updatedTime
-    links
-    shares
-  }
-}
+]
 ```
+
+## Sample Test execution.
+~~~
+  SocialDeck
+      GraphQL API
+        • Authentication
+          ◦ signUp()
+            ✓ should be able to sign up with a valid email (132ms)
+            ✓ should return error if email is not unique
+            ✓ should return error if the user is already logged in (81ms)
+          ◦ logIn()
+            ✓ should be able to log in with valid credentials (70ms)
+            ✓ should return error if the user is already logged in (79ms)
+            ✓ should return error if user's email is not in the db
+            ✓ should return error if user's password does not match the db record (73ms)
+          ◦ logOut()
+            ✓ should be able to log out an authenticated user (74ms)
+            ✓ should return error if the user has not logged in
+        • Queries
+          ◦ me()
+            ✓ should be able to return currently authenticated user (85ms)
+            ✓ should return error if the user has not logged in
+          ◦ users()
+            ✓ should return all users from the db (83ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if there are no users in the db (79ms)
+          ◦ findUserById()
+            ✓ should fetch existing user (83ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if the user does not exist (81ms)
+          ◦ posts()
+            ✓ should return all posts from the db (83ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if there are no posts in the db (81ms)
+          ◦ findPostById()
+            ✓ should fetch existing post (80ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if the post does not exist (77ms)
+        • Mutations
+          ◦ deleteUserById()
+            ✓ should delete an existing user (79ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if the user does not exist (78ms)
+          ◦ deleteAllUsers()
+            ✓ should delete all existing users (78ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if 'users' database is empty (81ms)
+          ◦ createPost()
+            ✓ should create a new post (81ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if 'links' argument contains a badly formatted URL (79ms)
+          ◦ deletePostById()
+            ✓ should delete an existing post (82ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if the post does not exist (86ms)
+          ◦ deleteAllPosts()
+            ✓ should delete all existing posts (83ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if 'posts' database is empty (83ms)
+          ◦ sharePost()
+            ✓ should share an existing post (90ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if the post does not exist (93ms)
+          ◦ updatePost()
+            ✓ should update an existing post (86ms)
+            ✓ should return error if the user has not logged in
+            ✓ should return error if the post does not exist (84ms)
+      Other tests
+        ✓ should get index page
+  
+  
+    45 passing (3s)
+~~~
+
+## Extra features.
+
+. . . . Briefly state any extra features of your assignment work that you feel should be high-lighted. This relates to 'independent learning' you have undertaken during the assignment . . . . .
