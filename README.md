@@ -23,23 +23,23 @@ It’s also possible to write queries and mutations directly on the left tab and
 If you'd like to see a video demo of the Explorer and API calls, [CLICK HERE](https://www.youtube.com/watch?v=5oLLi0NRc-g&feature=youtu.be).
 
 * __Queries__
-    * users: [User!]! - Gets a list of all users.
-    * findUserById(_id: String!): User! - Finds a user by ID.
-    * me: User! - Gets currently authenticated user.
-    * posts: [Post!]! - Gets a list of all user posts.
-    * findPostById(_id: String!): Post! - Finds a post by ID.
+    * `users: [User!]!` - Gets a list of all users.
+    * `findUserById(_id: String!): User!` - Finds a user by ID.
+    * `me: User!` - Gets currently authenticated user.
+    * `posts: [Post!]!` - Gets a list of all user posts.
+    * `findPostById(_id: String!): Post!` - Finds a post by ID.
 
 * __Mutations__
-    * signUp(email: EmailAddress!, password: String!, firstName: String!, lastName: String!): String! - Takes in the specified arguments, creates a new user and signs them in.
-    * logIn(email: EmailAddress!, password: String!): String! - Takes in the specified arguments and logs the user in.
-    * logOut: String! - Logs out currently authenticated user, if present. Returns a request status message.
-    * deleteUserById(_id: String!): User! - Deletes a user by its ID. Returns the deleted document.
-    * deleteAllUsers: String! - Deletes all users. Returns a request status message.
-    * createPost(message: String, links: [LinkInput!]): Post! - Takes in the specified arguments and creates a new post. Returns the created document.
-    * sharePost(postID: String!): Post! - Adds the ID of currently authenticated user to the *shares* array of the specified posts. Returns the shared post document.
-    * updatePost(postID: String!, message: String!, links: [LinkInput!]): Post! - Takes in the specified arguments to update an existing post. Returns the updated document.
-    * deletePostById(_id: String!): Post! - Deletes a post by its ID. Returns the deleted document.
-    * deleteAllPosts: String! - Deletes all posts. Returns a request status message.
+    * `signUp(email: EmailAddress!, password: String!, firstName: String!, lastName: String!): String!` - Takes in the specified arguments, creates a new user and signs them in.
+    * `logIn(email: EmailAddress!, password: String!): String!` - Takes in the specified arguments and logs the user in.
+    * `logOut: String!` - Logs out currently authenticated user, if present. Returns a request status message.
+    * `deleteUserById(_id: String!): User!` - Deletes a user by its ID. Returns the deleted document.
+    * `deleteAllUsers: String!` - Deletes all users. Returns a request status message.
+    * `createPost(message: String, links: [LinkInput!]): Post!` - Takes in the specified arguments and creates a new post. Returns the created document.
+    * `sharePost(postID: String!): Post!` - Adds the ID of currently authenticated user to the *shares* array of the specified posts. Returns the shared post document.
+    * `updatePost(postID: String!, message: String!, links: [LinkInput!]): Post!` - Takes in the specified arguments to update an existing post. Returns the updated document.
+    * `deletePostById(_id: String!): Post!` - Deletes a post by its ID. Returns the deleted document.
+    * `deleteAllPosts: String!` - Deletes all posts. Returns a request status message.
 
 ## Data model
 Simply put, the database stores users and their posts.
