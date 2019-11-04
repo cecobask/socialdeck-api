@@ -79,13 +79,13 @@ const resolvers = {
         async findPostById(_, {_id}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-    
+            
             const foundPost = await Post.findById(_id);
-    
+            
             if (!foundPost) throw new ApolloError(
                 `No post with ID ${_id} found!`,
                 'INVALID_QUERY_ERROR');
-    
+            
             return foundPost;
         },
     },
@@ -182,25 +182,19 @@ const resolvers = {
                     'INVALID_QUERY_ERROR');
             
             // Delete the user's posts first.
-            Post.deleteMany({'creatorID': _id})
-                .catch(err => {
-                    throw new ApolloError(err);
-                });
+            await Post.deleteMany({'creatorID': _id});
             
             await User.deleteOne({'_id': _id});
             
             return userToDelete;
         },
         
-        deleteAllUsers(_, __, {user}) {
+        async deleteAllUsers(_, __, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
             
             // Delete all user posts first.
-            Post.deleteMany({})
-                .catch(err => {
-                    throw new ApolloError(err);
-                });
+            await Post.deleteMany({});
             
             return User.deleteMany({})
                 .then(result => {
@@ -234,16 +228,16 @@ const resolvers = {
         async deletePostById(_, {_id}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-    
+            
             const postToDelete = await Post.findById(_id);
-    
+            
             if (!postToDelete)
                 throw new ApolloError(
                     `No post with ID ${_id} found!`,
                     'INVALID_QUERY_ERROR');
-    
+            
             await Post.deleteOne({'_id': _id});
-    
+            
             return postToDelete;
         },
         
@@ -256,39 +250,43 @@ const resolvers = {
                     // Means the posts database is empty.
                     if (result.n === 0)
                         throw new ApolloError(
-                            'No posts in the database!');
+                            'No posts in the database!', 'INVALID_QUERY_ERROR');
                     
                     return 'Successfully deleted all posts!';
-                })
-                .catch(err => {
-                    throw new ApolloError(err);
                 });
         },
         
-        sharePost(_, {postID}, {user}) {
+        async sharePost(_, {postID}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
             
             // Adds the user id to the the 'shares' array, if it doesn't exist there.
-            return Post.findOneAndUpdate({'_id': postID},
+            const updatedPost = await Post.findOneAndUpdate({'_id': postID},
                 {
                     '$addToSet': {
                         'shares': user._id,
                     },
+                    '$set': {
+                        'updatedTime': moment()
+                            .utc(true)
+                            .format(),
+                    },
                 },
                 {
                     new: true,
-                })
-                .catch(err => {
-                    throw new ApolloError(`Invalid post ID! ${err}`,
-                        'INVALID_QUERY_ERROR');
                 });
+            
+            if (!updatedPost)
+                throw new ApolloError(`No post with ID ${postID} found!`,
+                    'INVALID_QUERY_ERROR');
+            
+            return updatedPost;
         },
         
-        updatePost(_, {postID, message, links}, {user}) {
+        async updatePost(_, {postID, message, links}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-            return Post.findOneAndUpdate({'_id': postID},
+            const updatedPost = await Post.findOneAndUpdate({'_id': postID},
                 {
                     '$set': {
                         'message': message,
@@ -300,11 +298,13 @@ const resolvers = {
                 },
                 {
                     new: true,
-                })
-                .catch(err => {
-                    throw new ApolloError(`Invalid post ID! ${err}`,
-                        'INVALID_QUERY_ERROR');
                 });
+            
+            if (!updatedPost)
+                throw new ApolloError(`No post with ID ${postID} found!`,
+                    'INVALID_QUERY_ERROR');
+    
+            return updatedPost;
         },
     },
     
