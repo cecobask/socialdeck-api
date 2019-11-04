@@ -197,7 +197,7 @@ usage and pros/cons.
 GraphQL comes with built-in scalar types (Int, Float, String, Boolean and ID). While this covers most of the use cases,
 often the developer would need custom type like Date, Email, URL and so on. I used [graphql-scalars](https://github.com/Urigo/graphql-scalars)
 package, that provides a collection of scalars that can be used out of the box. I used scalar types `Email`, `Date` and 
-`Email` to support validation in my GraphQL API. 
+`URL` to support validation in my GraphQL API. 
 
 ### Authentication
 By default [Express](https://expressjs.com/) requests are sequential and no request can be linked
