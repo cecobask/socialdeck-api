@@ -23,8 +23,8 @@ describe('SocialDeck', function() {
                 dbName: 'socialDeckDB',
             },
         });
-        const connString = await mongoServer.getConnectionString();
-        await mongoose.connect(connString, {
+        await mongoServer.getConnectionString();
+        await mongoose.connect('mongodb://localhost:27015/socialDeckDB?', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             useCreateIndex: true,
