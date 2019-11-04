@@ -13,10 +13,8 @@ mongoose.connect(connString, {
     .then(db => {
         const conn = db.connection;
         debug(
-            `Connected to database ['${dbName}'] at ${conn.host}:${conn.port}`);
-    })
-    .catch(err => {
-        throw new Error(err);
+            `Connected to database ['${dbName}'] at ${conn.host}:${conn.port}`
+        );
     });
 
 module.exports = mongoose;
