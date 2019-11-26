@@ -15,6 +15,7 @@ variables:
 stages:
   - install
   - build
+  - deploy
 
 # Jobs:
 install_dependencies:
@@ -41,3 +42,14 @@ coverage:
   artifacts:
     paths:
       - coverage/
+
+pages:
+  stage: deploy
+  dependencies:
+    - coverage
+  script:
+    - mv coverage public
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
