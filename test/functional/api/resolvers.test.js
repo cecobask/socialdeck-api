@@ -6,25 +6,16 @@ const request = require('supertest');
 const agent = request.agent(url, {ca: process.env.SERVER_CERT});
 const User = require('../../../models/users');
 const Post = require('../../../models/posts');
-const {MongoMemoryServer} = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 const moment = require('moment');
 const _ = require('lodash');
 require('dotenv')
     .config();
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-let mongoServer;
 
 describe('SocialDeck', function() {
     before(async function() {
-        mongoServer = new MongoMemoryServer({
-            instance: {
-                port: 27015,
-                dbName: 'socialDeckDB',
-            },
-        });
-        await mongoServer.getConnectionString();
-        await mongoose.connect('mongodb://localhost:27015/socialDeckDB?', {
+        await mongoose.connect(process.env.MONGO_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             useCreateIndex: true,
@@ -37,7 +28,6 @@ describe('SocialDeck', function() {
     after(async function() {
         try {
             await mongoose.disconnect();
-            await mongoServer.stop();
             await server.close();
         }
         catch (e) {
