@@ -16,7 +16,7 @@ if (process.env.NODE_ENV !== 'test')
         })
         .then(db => {
             const conn = db.connection;
-            debug(
+            console.log(
                 `Connected to database ['${dbName}'] at ${conn.host}:${conn.port}`,
             );
         })

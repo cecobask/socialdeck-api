@@ -6,9 +6,10 @@ const jwt = require('jsonwebtoken');
 const {DateTimeResolver, URLResolver, EmailAddressResolver} = require(
     'graphql-scalars');
 const moment = require('moment');
+const fs = require('fs');
 require('dotenv')
     .config();
-const jwtKey = process.env.JWT_SECRET;
+const jwtKey = fs.readFileSync(__dirname + '/../secrets/jwtsecret.pem');
 
 const resolvers = {
     DateTime: DateTimeResolver,

@@ -16,7 +16,7 @@
     "compile:routes": "babel ./routes --out-dir dist/routes",
     "compile:schema": "babel ./schema --out-dir dist/schema ",
     "compile:app": "babel app.js db.js server.js --out-dir dist/",
-    "compile:copy": "cp -r node_modules/ dist/node_modules && cp -r views/ dist/views && cp -r public/ dist/public",
+    "compile:copy": "cp -r node_modules/ dist/node_modules && cp -r views/ dist/views && cp -r public/ dist/public && cp -r secrets/ dist/secrets",
     "compile:all": "npm-run-all compile:models compile:routes compile:schema compile:app compile:copy",
     "prebuild": "npm-run-all test clean",
     "build": "npm run compile",
