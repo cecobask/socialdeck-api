@@ -236,6 +236,10 @@ const resolvers = {
                     `No post with ID ${_id} found!`,
                     'INVALID_QUERY_ERROR');
             
+            if (postToDelete.creatorID !== user._id)
+                throw new AuthenticationError(
+                    'You cannot delete a post created by someone else!');
+            
             await Post.deleteOne({'_id': _id});
             
             return postToDelete;
@@ -303,7 +307,7 @@ const resolvers = {
             if (!updatedPost)
                 throw new ApolloError(`No post with ID ${postID} found!`,
                     'INVALID_QUERY_ERROR');
-    
+            
             return updatedPost;
         },
     },
