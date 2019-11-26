@@ -1,0 +1,30 @@
+# Node docker image on which this would be run
+image: node:latest
+
+cache:
+  paths:
+    - node_modules/
+
+variables:
+  NODE_ENV: 'test'
+
+# Pipeline:
+stages:
+  - install
+  - build
+
+# Jobs:
+install_dependencies:
+  stage: install
+  script:
+    - npm install
+  artifacts:
+    paths:
+      - node_modules/
+
+build_and_test:
+  stage: build
+  before_script:
+    - npm run clean
+  script:
+    - npm run compile:all
