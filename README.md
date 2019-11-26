@@ -1,5 +1,9 @@
 # Assignment 1 - Agile Software Practice
 
+[![pipeline status](https://gitlab.com/cecobask/socialdeckapi/badges/master/pipeline.svg)](https://gitlab.com/cecobask/socialdeckapi/commits/master)
+[![coverage report](https://gitlab.com/cecobask/socialdeckapi/badges/master/coverage.svg)](https://gitlab.com/cecobask/socialdeckapi/badges/master/coverage.svg?job=coverage)
+
+
 Name: Tsvetoslav Dimov
 
 ## Overview
