@@ -20,7 +20,7 @@
     "compile:copy": "cp -r node_modules/ dist/node_modules && cp -r views/ dist/views && cp -r public/ dist/public && cp -r secrets/ dist/secrets",
     "compile:all": "npm-run-all compile:models compile:routes compile:schema compile:app compile:copy",
     "prebuild": "npm-run-all test clean lint",
-    "build": "npm run compile:all",
+    "build:release": "npm-run-all test clean lint compile:all",
     "postbuild": "npm start",
     "postinstall": "rimraf ./dist && npm run compile:all"
   },
