@@ -9,6 +9,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=dev node dist/server.js",
     "test": "cross-env NODE_ENV=test mocha --exit",
+    "test:report": "cross-env NODE_ENV=test nyc mocha --exit",
     "lint": "eslint \"**/*.js\"",
     "lint:fix": "eslint \"**/*.js\" --fix",
     "clean": "rimraf ./dist && mkdir dist",
@@ -18,10 +19,10 @@
     "compile:app": "babel app.js db.js server.js --out-dir dist/",
     "compile:copy": "cp -r node_modules/ dist/node_modules && cp -r views/ dist/views && cp -r public/ dist/public && cp -r secrets/ dist/secrets",
     "compile:all": "npm-run-all compile:models compile:routes compile:schema compile:app compile:copy",
-    "prebuild": "npm-run-all test clean",
-    "build": "npm run compile",
+    "prebuild": "npm-run-all test clean lint",
+    "build": "npm run compile:all",
     "postbuild": "npm start",
-    "test:report": "cross-env NODE_ENV=test nyc mocha --exit"
+    "postinstall": "rimraf ./dist && npm run compile:all"
   },
   "author": "Tsvetoslav Dimov",
   "license": "ISC",
