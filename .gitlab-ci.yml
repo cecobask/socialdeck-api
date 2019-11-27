@@ -59,6 +59,7 @@ deploy_staging:
   image: ruby:latest
   only:
     - develop
+    - master
   stage: deploy
   before_script:
     - apt-get update -qy
@@ -83,3 +84,18 @@ continuous_delivery:
     - dpl --provider=heroku --app=$HEROKU_APP_NAME_PROD --api-key=$HEROKU_API_KEY
     - echo "Deployed to production server"
   when: manual
+
+continuous_deployment:
+  image: ruby:latest
+  dependencies:
+    - deploy_staging
+  only:
+    - master
+  stage: production
+  before_script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev
+    - gem install dpl
+  script:
+    - dpl --provider=heroku --app=$HEROKU_APP_NAME_PROD --api-key=$HEROKU_API_KEY
+    - echo "Deployed to production server"
