@@ -1968,6 +1968,7 @@ const testUser2 = new User({
 });
 const testPost = new Post({
     'creatorID': testUser._id,
+    'creatorFullName': `${testUser.firstName} ${testUser.lastName}`,
     'createdTime': moment()
         .utc(true)
         .format(),
@@ -1981,6 +1982,7 @@ const testPost = new Post({
 });
 const testPost2 = new Post({
     'creatorID': testUser2._id,
+    'creatorFullName': `${testUser2.firstName} ${testUser2.lastName}`,
     'createdTime': moment()
         .utc(true)
         .format(),

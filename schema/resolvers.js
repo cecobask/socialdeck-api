@@ -215,6 +215,7 @@ const resolvers = {
             
             const post = new Post({
                 'creatorID': user._id,
+                'creatorFullName': `${user.firstName} ${user.lastName}`,
                 'createdTime': moment()
                     .utc(true)
                     .format(),

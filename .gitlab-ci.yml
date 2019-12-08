@@ -59,7 +59,6 @@ deploy_staging:
   image: ruby:latest
   only:
     - develop
-    - master
   stage: deploy
   before_script:
     - apt-get update -qy

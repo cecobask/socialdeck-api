@@ -6,6 +6,10 @@ const PostSchema = new mongoose.Schema({
             type: String,
             required: true,
         },
+        creatorFullName: {
+            type: String,
+            required: true
+        },
         createdTime: {
             type: Date,
             required: true,
