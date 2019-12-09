@@ -1625,12 +1625,6 @@ describe('SocialDeck', function() {
                             expect(sharedPost.message)
                                 .to
                                 .equal(testPost2.message);
-                            expect(sharedPost.updatedTime)
-                                .to
-                                .not
-                                .be
-                                .null;
-                            expect(updatedTime.isAfter(createdTime)).to.be.true;
                             expect(sharedPost.links)
                                 .to
                                 .have
