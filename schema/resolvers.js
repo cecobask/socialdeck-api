@@ -271,12 +271,7 @@ const resolvers = {
                 {
                     '$addToSet': {
                         'shares': user._id,
-                    },
-                    '$set': {
-                        'updatedTime': moment()
-                            .utc(true)
-                            .format(),
-                    },
+                    }
                 },
                 {
                     new: true,

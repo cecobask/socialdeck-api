@@ -1612,10 +1612,6 @@ describe('SocialDeck', function() {
                         .then(async res => {
                             const response = JSON.parse(res.text);
                             const sharedPost = response.data.sharePost;
-                            const updatedTime = moment.utc(
-                                sharedPost.updatedTime);
-                            const createdTime = moment.utc(
-                                sharedPost.createdTime);
                             const posts = await Post.find({});
                             expect(response.errors).to.be.undefined;
                             expect(sharedPost).to.not.be.null;
@@ -1625,12 +1621,6 @@ describe('SocialDeck', function() {
                             expect(sharedPost.message)
                                 .to
                                 .equal(testPost2.message);
-                            expect(sharedPost.updatedTime)
-                                .to
-                                .not
-                                .be
-                                .null;
-                            expect(updatedTime.isAfter(createdTime)).to.be.true;
                             expect(sharedPost.links)
                                 .to
                                 .have
