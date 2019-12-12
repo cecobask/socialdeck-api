@@ -5,6 +5,7 @@ scalar EmailAddress
 type Post {
     _id: ID!
     creatorID: String!
+    creatorFullName: String!
     createdTime: DateTime!
     message: String
     updatedTime: DateTime

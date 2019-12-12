@@ -1612,10 +1612,6 @@ describe('SocialDeck', function() {
                         .then(async res => {
                             const response = JSON.parse(res.text);
                             const sharedPost = response.data.sharePost;
-                            const updatedTime = moment.utc(
-                                sharedPost.updatedTime);
-                            const createdTime = moment.utc(
-                                sharedPost.createdTime);
                             const posts = await Post.find({});
                             expect(response.errors).to.be.undefined;
                             expect(sharedPost).to.not.be.null;
@@ -1962,6 +1958,7 @@ const testUser2 = new User({
 });
 const testPost = new Post({
     'creatorID': testUser._id,
+    'creatorFullName': `${testUser.firstName} ${testUser.lastName}`,
     'createdTime': moment()
         .utc(true)
         .format(),
@@ -1975,6 +1972,7 @@ const testPost = new Post({
 });
 const testPost2 = new Post({
     'creatorID': testUser2._id,
+    'creatorFullName': `${testUser2.firstName} ${testUser2.lastName}`,
     'createdTime': moment()
         .utc(true)
         .format(),

@@ -32,9 +32,9 @@ app.use(session({
     // Save Express sessions to MongoDB.
     store: new MongoStore({mongooseConnection: db.connection}),
     cookie: {
-        secure: false,
+        secure: true,
         maxAge: 60 * 60 * 1000, // 1 hour.
-        httpOnly: false,
+        httpOnly: true
     },
 }));
 app.set('trust proxy', true);
