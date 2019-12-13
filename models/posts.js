@@ -27,6 +27,10 @@ const PostSchema = new mongoose.Schema({
             type: Array,
             default: [],
         },
+        likes: {
+            type: Array,
+            default: []
+        }
     },
     {collection: 'posts'});
 PostSchema.plugin(uniqueValidator);
