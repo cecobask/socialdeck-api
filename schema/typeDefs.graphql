@@ -10,7 +10,8 @@ type Post {
     message: String
     updatedTime: DateTime
     links: [URL!]
-    shares: [String!]
+    shares: [String!],
+    likes: [String!]
 }
 
 type User {
@@ -25,9 +26,12 @@ type User {
 type Query {
     users: [User!]!
     findUserById(_id: String!): User!
+    findUserByName(firstName: String!, lastName: String!): User!
     me: User!
     posts: [Post!]!
     findPostById(_id: String!): Post!
+    userPosts(_id: String!): [Post!]
+    findPostSharers(postID: String!): [User!]
 }
 
 input LinkInput {
@@ -42,6 +46,7 @@ type Mutation {
     deleteAllUsers: String!
     createPost(message: String, links: [LinkInput!]): Post!
     sharePost(postID: String!): Post!
+    likePost(postID: String!): Post!
     updatePost(postID: String!, message: String!, links: [LinkInput!]): Post!
     deletePostById(_id: String!): Post!
     deleteAllPosts: String!
