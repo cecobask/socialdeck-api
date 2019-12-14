@@ -52,19 +52,20 @@ const resolvers = {
             
             return foundUser;
         },
-    
+        
         async findUserByName(_, {firstName, lastName}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-    
+            
             const foundUser = await User.findOne({
-                firstName: firstName, lastName: lastName
+                firstName: firstName,
+                lastName: lastName,
             });
-    
+            
             if (!foundUser) throw new ApolloError(
                 `No user with name ${firstName} ${lastName} found!`,
                 'INVALID_QUERY_ERROR');
-    
+            
             return foundUser;
         },
         
@@ -104,37 +105,37 @@ const resolvers = {
             
             return foundPost;
         },
-    
+        
         // Get all posts by specified user.
         userPosts(_, {_id}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-        
+            
             return Post.find({creatorID: _id})
                 .then(posts => {
                     if (!posts.length)
                         throw new ApolloError(
                             'This user has not posted anything yet!',
                             'INVALID_QUERY_ERROR');
-                
+                    
                     return posts;
                 });
         },
-    
+        
         async findPostSharers(_, {postID}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-    
+            
             const foundPost = await Post.findById(postID);
             
             console.log(foundPost);
-    
+            
             if (!foundPost) throw new ApolloError(
                 `No post with ID ${postID} found!`,
                 'INVALID_QUERY_ERROR');
             
             let postSharers = [];
-    
+            
             for (const userID of foundPost.shares) {
                 const user = await User.findById(userID);
                 postSharers.push(user);
@@ -320,11 +321,10 @@ const resolvers = {
                 'You must authenticate first!');
             
             // Adds the user id to the the 'shares' array, if it doesn't exist there.
-            const updatedPost = await Post.findOneAndUpdate({'_id': postID},
-                {
-                    '$addToSet': {
+            const updatedPost = await Post.findOneAndUpdate({'_id': postID},{
+                    '$push': {
                         'shares': user._id,
-                    }
+                    },
                 },
                 {
                     new: true,
@@ -336,26 +336,26 @@ const resolvers = {
             
             return updatedPost;
         },
-    
+        
         async likePost(_, {postID}, {user}) {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
-        
+            
             // Adds the user id to the the 'shares' array, if it doesn't exist there.
             const likedPost = await Post.findOneAndUpdate({'_id': postID},
                 {
                     '$addToSet': {
                         'likes': user._id,
-                    }
+                    },
                 },
                 {
                     new: true,
                 });
-        
+            
             if (!likedPost)
                 throw new ApolloError(`No post with ID ${postID} found!`,
                     'INVALID_QUERY_ERROR');
-        
+            
             return likedPost;
         },
         
