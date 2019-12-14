@@ -321,7 +321,7 @@ const resolvers = {
                 'You must authenticate first!');
             
             // Adds the user id to the the 'shares' array, if it doesn't exist there.
-            const updatedPost = await Post.findOneAndUpdate({'_id': postID},{
+            const updatedPost = await Post.findOneAndUpdate({'_id': postID}, {
                     '$push': {
                         'shares': user._id,
                     },
@@ -341,22 +341,26 @@ const resolvers = {
             if (!user) throw new AuthenticationError(
                 'You must authenticate first!');
             
-            // Adds the user id to the the 'shares' array, if it doesn't exist there.
-            const likedPost = await Post.findOneAndUpdate({'_id': postID},
-                {
-                    '$addToSet': {
-                        'likes': user._id,
-                    },
-                },
-                {
-                    new: true,
-                });
-            
-            if (!likedPost)
+            const foundPost = await Post.findById(postID);
+            if (!foundPost)
                 throw new ApolloError(`No post with ID ${postID} found!`,
                     'INVALID_QUERY_ERROR');
             
-            return likedPost;
+            // Check if the user has liked the post before.
+            const userLiked = foundPost.likes.some(
+                userID => userID === user._id);
+            
+            // Insert / Remove depending on boolean value of 'userLiked'.
+            let update = userLiked
+                ? {'$pull': {'likes': user._id}}
+                : {'$addToSet': {'likes': user._id}};
+            
+            return Post.findByIdAndUpdate({'_id': postID},
+                update,
+                {
+                    new: true,
+                },
+            );
         },
         
         async updatePost(_, {postID, message, links}, {user}) {
