@@ -54,7 +54,7 @@
     "graphql-tools": "^4.0.5",
     "http-errors": "^1.7.3",
     "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mocha": "^6.2.2",
     "moment": "^2.24.0",
     "mongodb-memory-server": "^6.0.1",
